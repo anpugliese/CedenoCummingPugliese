@@ -55,9 +55,13 @@ and
 assert G1_SafeShopping{
 no c: Customer | (Queue.(c.queue)).state=FULL and c.action=ENTER
 }
+// the model is presented with representative cases
 pred show{
 #Section=4
-#Customer=4
+#Customer=3
+some c : Customer | #Queue.(c.queue)=#Section
+some c : Customer | #Queue.(c.queue)<#Section and c.action=ENTER
+some c : Customer | #Queue.(c.queue)<#Section and c.action=WAIT
 }
 run show for 10
 // goal is check
