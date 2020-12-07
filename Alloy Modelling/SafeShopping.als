@@ -51,8 +51,9 @@ and
 }
 //G1. The in-person grocery shopping must be carried out 
 // guaranteeing the safety of customers and employees. 
-//This means that users cannot enter a full section.
-assert G1_SafeShopping{
+//W1. The in-person shopping will be safe as long as 
+// customers do not enter a full section.
+assert G1W1_SafeShopping{
 no c: Customer | (Queue.(c.queue)).state=FULL and c.action=ENTER
 }
 // the model is presented with representative cases
@@ -65,4 +66,4 @@ some c : Customer | #Queue.(c.queue)<#Section and c.action=WAIT
 }
 run show for 10
 // goal is check
-check G1_SafeShopping
+check G1W1_SafeShopping
