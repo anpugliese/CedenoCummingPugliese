@@ -14,3 +14,27 @@ Within the activated environment, use the following command to install all depen
 ```
 pip install -r requirements.txt
 ```
+
+To run server
+1. Activate virtual environment:
+```
+activate virtual environment (venv)
+cd venv/Scripts
+activate.bat
+```
+
+2. Run flask:
+```
+cd server/flask_server
+set FLASK_APP=main.py 
+set APP_SETTINGS=config.DevelopmentConfig
+flask run
+```
+
+For changes in the database model:
+```
+python manage.py db migrate
+python manage.py db upgrade
+#Only when there are problems upgrading the db and repeat the two first steps
+python manage.py db stamp head
+```
