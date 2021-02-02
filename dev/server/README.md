@@ -23,14 +23,20 @@ cd venv/Scripts
 activate.bat
 ```
 
-2. Run flask:
+2.a Run flask:
 ```
 cd server/flask_server
 set FLASK_APP=main.py 
 set APP_SETTINGS=config.DevelopmentConfig
 flask run
 ```
-
+2.b Run flask on powershell console:
+```
+cd server/flask_server
+$env:FLASK_APP = "main.py"
+$env:APP_SETTINGS="config.DevelopmentConfig"
+flask run
+```
 For changes in the database model:
 ```
 python manage.py db migrate
