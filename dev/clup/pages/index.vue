@@ -2,9 +2,29 @@
 <div>
   <!-- Button bar in the three bottom left  -->
   <div class="button-bar">
-    <div class="round-button">
+    <div class="round-button" v-on:click ="filterIsActive = !filterIsActive">
       <fa-icon :icon="['fas', 'filter']" class="round-button-icon"/>
     </div>
+
+    <div class="filter-popup" id="filter-form" v-if="filterIsActive">
+      <h5 style="text-align: center; padding-top: 5px;">Filters</h5>
+      <div class="slidecontainer">
+        <input type="range" min="1" max="100" value="50" v-model="slider_value">
+        <h6>slider value {{slider_value}}</h6>
+      </div>
+      <div class="check" v-for="sp in supermarkets_names" :key="sp.id">
+        <label :for="sp.id">
+          <input type="checkbox" v-model="sp.active" :name="sp.id">
+          {{sp.name}}  
+        </label><br>
+      </div>
+      <div style="text-align:center;">
+        <button @click="applyFilter()" type="submit">Apply</button>
+
+        <button @click="clearFilter()" style="background: red;" type="submit">Clear</button>
+      </div>
+    </div>
+    
 
     <div class="round-button">
       <fa-icon :icon="['fas', 'running']" class="round-button-icon"/>
@@ -31,6 +51,10 @@
     <client-only>
       <l-map :zoom=13 :center="[map_lat, map_lng]" :options="map_options">
         <l-tile-layer url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"></l-tile-layer>
+        <l-marker :lat-lng="[map_lat, map_lng]" 
+          :icon="icon">
+          
+        </l-marker>
 
         <!-- Iterate to render nearby supermarkets markers -->
         <l-marker 
@@ -84,6 +108,14 @@
         customText: "Supermarket",
         staticAnchor: [16, 37],
         supermarkets_list : [],
+
+        filterName : [],
+        filterWaitingTime : null,
+
+        filterIsActive : false,
+
+        slider_value : 0,
+        supermarkets_names: [],
       }
     },
     
@@ -112,6 +144,7 @@
             response.json().then(data => {
               console.log('Success:', data);
               this.supermarkets_list = data.supermarkets;
+              
             })
           } 
         })
@@ -125,30 +158,105 @@
         let distance = Math.sqrt(Math.pow((parseFloat(lat1) - parseFloat(lat2)), 2) + Math.pow((parseFloat(lon1) - parseFloat(lon2)), 2));
         return distance;
       },
-      
-    },
+      /* Takes the slider value and the checked supermarkets */
+      applyFilter(){
+        this.filterWaitingTime = this.slider_value;
+        this.filterName = [];
+        for(let i in this.supermarkets_names){
+          if(this.supermarkets_names[i].active){
+            this.filterName.push(this.supermarkets_names[i].name);
+          }
+        }
+        
+      },
+      /* Lists the filter names  */
+      updateFilterNames(super_list){
+        if(this.supermarkets_names.length == 0){
+          let sp_list = []
+          for(let i in super_list){
+            let supermarket = super_list[i];
+            if(sp_list.filter( sp=> sp['name'] === supermarket.name).length == 0){            
+              let obj = {
+                name: supermarket.name,
+                active: false
+              }
+              sp_list.push(obj)
+            }
+          }
+          this.supermarkets_names = sp_list;
+        }
+      },
 
-    computed: {
-      /* Dynamic function to update the list of nearby supermarkets */
-      new_supermarkets_list: function(){
+      filterList(){
+        /* super_list of nearby supermarkets according to user's location */
         let super_list = []; 
         for(let i in this.supermarkets_list){
           let supermarket = this.supermarkets_list[i];
           if(this.getDistance(this.map_lat, this.map_lng, supermarket.lat, supermarket.lon) < 0.02){
             super_list.push(supermarket)
           }
+          
         }
-        return super_list
+        this.updateFilterNames(super_list);
+        /* The filtered supermarkets must comply with both waiting time and selected names */
+        /* If there's a filter value for waiting time takes the elements(supermarkets) that must be shown */
+        super_list = super_list.filter((element)=>{
+          if(this.filterWaitingTime != null){
+            if(element.waiting_time > this.filterWaitingTime){
+              return false
+            }
+          }
+          
+          /* Updates the list with the selected supermarkets in the checkbox */
+          if(this.filterName.length > 0){
+            let name_exists = false;
+            for(let i in this.filterName){
+              let name = this.filterName[i];
+              if(element.name == name){
+                name_exists = true;
+              }
+            }
+            if(!name_exists){
+              return false
+            }
+
+          }
+          return true;
+          
+        });
+        return super_list;
+      },
+
+      /* Clears filter and shows all nearby supermarkets */
+      clearFilter(){
+        for(let i in this.supermarkets_names){
+          let supermarket = this.supermarkets_names[i];
+          supermarket.active = false;
+        }
+        this.applyFilter();
       }
+
+    },
+
+    computed: {
+      /* Dynamic function to update the list of nearby supermarkets */
+      new_supermarkets_list: function(){
+        this.filterTrigger;
+        let super_list = this.filterList();
+        let super_copy = super_list;
+        return super_list
+      },
     },
 
     mounted(){
+      /* Get users location */
       this.getLocation();
       this.icon = this.$L.icon({
         iconUrl: "https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg",
         iconSize: [30, 42],
         iconAnchor: [15, 42] // half of width + height
       })
+      /* load all supermarkets from the database */
       this.loadSupermarkets();
     }
   }
@@ -330,6 +438,45 @@ img {
 
 .yellow-marker{
   background-color: #c2bf1a;
+}
+
+.filter-popup{
+  width: 190px;
+  height: 250px;
+  border-radius: 5px;
+  position: absolute;
+  z-index: 99999;
+  background: white;
+  border: 0px solid #333333;
+  top: -250px;
+  left: -190px;
+  color: #333333;
+  overflow: scroll;
+  box-shadow:3px 4px 5px #888888;
+}
+
+.slidecontainer {
+  width: 100%; /* Width of the outside container */
+  text-align: center;
+}
+
+.check{
+  padding: 0px 10px;
+}
+
+button {
+    background-color: #4a0d70;
+    color: white;
+    border-radius: 4px;
+    padding: 8px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 50%;
+  }
+
+button:hover {
+  opacity: 0.8;
 }
 
 </style>
