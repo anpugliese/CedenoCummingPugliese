@@ -1,5 +1,7 @@
 import os
 import json
+import secrets
+import datetime
 from datetime import timedelta
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
@@ -27,7 +29,7 @@ jwt = JWT(app, authenticate, identity) #JWT Json Web Token to manage sessions, b
 CORS(app)
 
 #This must be declared after declaring db
-from models import User, Supermarket
+from models import User, Supermarket, Request
 from timetable import Timetable
 
 @app.route('/protected')
@@ -52,8 +54,39 @@ def register():
         print(ex)
         return {"error": "Error"}, 400
 
+#Booking function for selected supermarket
+@cross_origin(origin='*')
+@app.route('/booking', methods=['POST'])
+def booking():
+    try:
+        print(request.json)
+        user_id = request.json.get('user_id')
+        superid = request.json.get('superid')
+        #date_time = request.json.get('timeid')
+        date_time = datetime.datetime.now()
+        typeid = 'Booking' 
+
+        repeatedUser = Request.query.filter_by(user_id=user_id).first()
+        maxBookings = Request.query.filter_by(time=date_time, supermarket_id=superid).count()
+        
+        if maxBookings > 3:
+            return {"message": "Booking Time is Full."}, 201
+        elif repeatedUser == None:
+            print(user_id)
+            print(user_id, superid, date_time, typeid)
+            booking_token = secrets.token_bytes(10)
+            bookingreq = Request(user_id, superid, date_time, typeid, booking_token)
+            db.session.add(bookingreq)
+            db.session.commit()
+            return {"message": "Booking has been created."}, 201
+        else:
+            return {"error": "You already Have a Booking."}, 400
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+
 #Populate database with supermarkets from supermarkets.json, only used once while developing 
-""" @cross_origin(origin='*')
+"""@cross_origin(origin='*')
 @app.route('/supermarkets', methods=['GET'])
 def supermarket():
     try:
@@ -69,7 +102,7 @@ def supermarket():
         return {"message": "supermarket have been created."}, 201
     except Exception as ex:
         print(ex)
-        return {"error": "Error"}, 400 """
+        return {"error": "Error"}, 400"""
 
 #Retrieve all supermarkets (filter only in frontend)
 @cross_origin(origin='*')
