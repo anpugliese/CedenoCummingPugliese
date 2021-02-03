@@ -23,7 +23,7 @@ cd venv/Scripts
 activate.bat
 ```
 
-2.a Run flask:
+2.a Run flask on CMD console:
 ```
 cd server/flask_server
 set FLASK_APP=main.py 
@@ -35,6 +35,13 @@ flask run
 cd server/flask_server
 $env:FLASK_APP = "main.py"
 $env:APP_SETTINGS="config.DevelopmentConfig"
+flask run
+```
+2.c Run flask on Linux console:
+```
+cd server/flask_server
+export FLASK_APP=main.py
+export APP_SETTINGS=config.DevelopmentConfig
 flask run
 ```
 For changes in the database model:
