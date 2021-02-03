@@ -98,3 +98,15 @@ def supermarkets_list():
     except Exception as ex:
         print(ex)
         return {"error": "Error"}, 400
+
+@cross_origin(origin='*')
+@app.route('/lineup', methods=['POST'])
+def lineup():
+    try:
+        print(type(request.json))
+        supermarket_id = request.json.get('supermarket_id')
+        # print(supermarket_id)
+        return 'bien'
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400

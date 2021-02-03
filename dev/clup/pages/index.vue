@@ -58,11 +58,22 @@
 
         <!-- Iterate to render nearby supermarkets markers -->
         <l-marker 
-          v-for="supermarket in new_supermarkets_list"
+          v-for="(supermarket,index) in new_supermarkets_list"
           :key="supermarket.id"
           :lat-lng="[supermarket.lat, supermarket.lon]" 
-          :icon="icon" 
+          :icon="icon"
         >
+          <l-popup>
+            <div style="text-align:center;">
+              
+              <button 
+              class="button-popup button1" 
+              v-on:click="lineup(index)"
+              type="submit"
+              >
+              Line Up</button>
+            </div> 
+          </l-popup>
           <l-icon
             :icon-anchor="staticAnchor"
             class-name="someExtraClass"
@@ -116,6 +127,7 @@
 
         slider_value : 0,
         supermarkets_names: [],
+        supermarket_id: 0,
       }
     },
     
@@ -152,7 +164,23 @@
         console.error('Error:', error);
         });
       },
-
+      /* lineup function to send data and get a response from the server */ 
+      lineup(sm_id){
+        const data = { supermarket_id: sm_id };
+        fetch('http://127.0.0.1:5000/lineup', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        })
+        .then(response => {
+          console.log(response);
+        })
+        .catch((error) => {
+        console.error('Error:', error);
+        });
+      },
       /* Distance between two points */
       getDistance(lat1, lon1, lat2, lon2){
         let distance = Math.sqrt(Math.pow((parseFloat(lat1) - parseFloat(lat2)), 2) + Math.pow((parseFloat(lon1) - parseFloat(lon2)), 2));
@@ -258,6 +286,7 @@
       })
       /* load all supermarkets from the database */
       this.loadSupermarkets();
+      
     }
   }
 
@@ -478,5 +507,20 @@ button {
 button:hover {
   opacity: 0.8;
 }
+
+.button-popup {
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+.button1 {background-color: #4CAF50;} /* Green */
+.button2 {background-color: #008CBA;} /* Blue */
 
 </style>
