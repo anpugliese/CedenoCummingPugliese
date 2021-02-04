@@ -1,11 +1,14 @@
 import os
 import json
-from datetime import timedelta
+import secrets
+import datetime
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
+from sqlalchemy import desc
+from sqlalchemy.sql import func
 
 #Authenticate function for JWT
 def authenticate(username, password):
@@ -21,13 +24,13 @@ def identity(payload):
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=12) #Session time
+app.config['JWT_EXPIRATION_DELTA'] = datetime.timedelta(hours=12) #Session time
 db = SQLAlchemy(app)
 jwt = JWT(app, authenticate, identity) #JWT Json Web Token to manage sessions, by default managed in /auth (POST request)
 CORS(app)
 
 #This must be declared after declaring db
-from models import User, Supermarket
+from models import User, Supermarket, Request, Waiting, Shopping, Record
 from timetable import Timetable
 
 @app.route('/protected')
@@ -99,14 +102,108 @@ def supermarkets_list():
         print(ex)
         return {"error": "Error"}, 400
 
+def averageTime(supermarket):
+    records=Record.query.filter_by(supermarket_id=supermarket.id)
+    records_count=records.count()
+    if records_count>0:
+        return db.session(func.avg(Record.delta_time)).first()
+    else:
+        return supermarket.mean_shopping_time
+
+def isAvailable(supermarket):
+    people_shopping=Shopping.query.filter_by(supermarket_id=supermarket.id).count()
+    print('people shopping '+str(people_shopping))
+    if people_shopping<=supermarket.max_capacity:
+        return True
+    else:
+        return False
+
 @cross_origin(origin='*')
 @app.route('/lineup', methods=['POST'])
 def lineup():
     try:
-        print(type(request.json))
+        
+        print(request.json)
+        username = request.json.get('username')
         supermarket_id = request.json.get('supermarket_id')
-        # print(supermarket_id)
-        return 'bien'
+        date_time = datetime.datetime.now()
+        typeid = 'ASAP' 
+        requests = Request.query.filter_by(username=username).count()
+        
+        if requests < 1:
+            print(username, supermarket_id, date_time, typeid)
+            lineup_token = secrets.token_bytes(10)
+            lineupreq = Request(username, supermarket_id, date_time, typeid, lineup_token)
+            db.session.add(lineupreq)
+            db.session.commit()
+            waitingreq = Waiting(username, lineup_token, supermarket_id, date_time)
+            db.session.add(waitingreq)
+            db.session.commit()
+            supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+            if not isAvailable(supermarket):
+                supermarket.waiting_time += averageTime(supermarket)
+                print('está lleno')
+                db.session.commit()
+            return {"message": "Line-up has been created."}, 201
+        else:
+            return {"error": "You already Have a Booking."}, 400
     except Exception as ex:
         print(ex)
         return {"error": "Error"}, 400
+
+
+
+# def isTurn(username,supermarket_id):
+#     supermarket=Supermarket.query.filter_by(id=supermarket_id)
+#     date_time_now = datetime.datetime.now()
+#     waitingUser=Waiting.query.filter_by(supermarket_id=id).order_by(desc(Waiting.waiting_time))
+    
+
+#     if waitingUser!= None:
+        
+    
+#     else:
+#         return False
+
+
+# @cross_origin(origin='*')
+# @app.route('/getIn', methods=['POST'])
+# def getIn():
+#     try:
+#         print(request.json)
+#         token = request.json.get('token')
+#         waitingUser = Waiting.query.filter_by(token=token)
+#         username=waitingUser.username
+#         supermarket_id = request.json.get('supermarket_id')
+#         date_time = datetime.datetime.now()
+#         if waitingUser.count()==1 and isAvailable(supermarket_id):
+#             db.session.delete(waitingUser)
+#             db.session.commit()
+#             shoppingreq = Shopping(username, token, supermarket_id, date_time)
+#             db.session.add(shoppingreq)
+#             db.session.commit()
+#             return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
+#         else:
+#             return {"error": "You already Have a Booking."}, 400
+#     except Exception as ex:
+#         print(ex)
+#         return {"error": "Error"}, 400
+# def getOut():
+#     try:
+#         print(request.json)
+#         token = request.json.get('token')
+#         shoppingUser = Shopping.query.filter_by(token=token)
+#         username=shoppingUser.username
+#         date_time = datetime.datetime.now()
+#         if waitingUser.count()==1 and isAvailable(supermarket_id):
+#             db.session.delete(waitingUser)
+#             db.session.commit()
+#             shoppingreq = Shopping(username, token, supermarket_id, date_time)
+#             db.session.add(shoppingreq)
+#             db.session.commit()
+#             return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
+#         else:
+#             return {"error": "You already Have a Booking."}, 400
+#     except Exception as ex:
+#         print(ex)
+#         return {"error": "Error"}, 400
