@@ -7,7 +7,7 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     SECRET_KEY = 'this-really-needs-to-be-changed'
-    SQLALCHEMY_DATABASE_URI = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+    SQLALCHEMY_DATABASE_URI = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
 
 
 class ProductionConfig(Config):

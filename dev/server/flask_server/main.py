@@ -2,6 +2,8 @@ import os
 import json
 import secrets
 import datetime
+import string
+import re
 from datetime import timedelta
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
@@ -58,23 +60,34 @@ def register():
 
 
 #Populate database with supermarkets from supermarkets.json, only used once while developing 
-"""@cross_origin(origin='*')
-@app.route('/supermarkets', methods=['GET'])
-def supermarket():
-    try:
-        f = open("data/supermarkets.json")
-        supermarkets_dict = json.loads(f.read())
-        for supermarket in supermarkets_dict:
-            name = supermarket["name"]
-            lat = supermarket["lat"]
-            lon = supermarket["lon"]
-            sp = Supermarket(name, lat, lon)
-            db.session.add(sp) 
-            db.session.commit()
-        return {"message": "supermarket have been created."}, 201
-    except Exception as ex:
-        print(ex)
-        return {"error": "Error"}, 400"""
+# @cross_origin(origin='*')
+# @app.route('/supermarkets', methods=['GET'])
+# def supermarket():
+#     try:
+#         f = open("data/supermarkets.json")
+#         supermarkets_dict = json.loads(f.read())
+#         g = open("data/images.json")
+#         images_dict = json.loads(g.read())
+#         regex = re.compile('^[a-zA-Z0-9]*$')
+#         for supermarket in supermarkets_dict:
+#             name = supermarket["name"]
+#             aux=True
+#             for imgs in images_dict:
+#                 if imgs["name"] in re.sub('[^A-Za-z0-9]+', ' ', name).lstrip().lower():
+#                     logo=imgs["url"]
+#                     aux=False
+#                     break
+#             if aux:
+#                 logo="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Italian_traffic_signs_-_icona_supermercato.svg/1024px-Italian_traffic_signs_-_icona_supermercato.svg.png"
+#             lat = supermarket["lat"]
+#             lon = supermarket["lon"]
+#             sp = Supermarket(name, lat, lon, logo)
+#             db.session.add(sp) 
+#             db.session.commit()
+#         return {"message": "supermarket have been created."}, 201
+#     except Exception as ex:
+#         print(ex)
+#         return {"error": "Error"}, 400
 
 #Retrieve all supermarkets (filter only in frontend)
 @cross_origin(origin='*')
