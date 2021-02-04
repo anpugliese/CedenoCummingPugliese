@@ -260,12 +260,13 @@
         }
         this.applyFilter();
       },
-      /* lineup function to send data and get a response from the server */
 
+      /* lineup function to send data and get a response from the server */
       async lineup(sm_id){
-        let token;
-        token = await this.getToken();
-        const data = { supermarket_id: sm_id, username: this.username };
+        let token = await this.getToken();
+        let username = await this.username;
+        console.log(username);
+        const data = { supermarket_id: sm_id, username: username };
         fetch('http://127.0.0.1:5000/lineup', {
         method: 'POST',
         headers: {
@@ -300,9 +301,7 @@
       isAuth(){
         return this.auth;
       },
-      getUsername(){
-        return this.username;
-      }
+     
     },
 
     mounted(){

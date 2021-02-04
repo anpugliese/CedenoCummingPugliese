@@ -40,6 +40,8 @@ export default {
         /* login function to send data and get a response from the server */ 
         login(){
             const data = { username: this.username, password: this.password };
+            let savedUsername = this.username;
+            console.log(savedUsername);
 
             fetch('http://127.0.0.1:5000/auth', {
             method: 'POST', // or 'PUT'
@@ -56,7 +58,8 @@ export default {
                     response.json().then(data => {
                         console.log('Success:', data);
                         if(this.login_success){
-                            this.saveToken(data.access_token);
+                            console.log(savedUsername);
+                            this.saveToken({token: data.access_token, username: savedUsername});
                             this.$router.push("/");
                         }
                     })

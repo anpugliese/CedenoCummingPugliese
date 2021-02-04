@@ -13,10 +13,11 @@ export const state = () => ({
   }
 
   export const actions = {
-    login({ commit }, payload, username ){
-        window.localStorage.setItem("access_token", payload);
+    login({ commit }, payload ){
+        window.localStorage.setItem("access_token", payload.token);
+        window.localStorage.setItem("username", payload.username);
         commit("updateAuth", true);
-        commit("updateUsername", username);
+        commit("updateUsername", payload.username);
     },
     logout({commit}, payload){
         window.localStorage.clear();
@@ -25,6 +26,9 @@ export const state = () => ({
     },
     getToken({commit}){
         return window.localStorage.getItem("access_token");
+    },
+    getUsername({commit}){
+        return window.localStorage.getItem("username");
     },
     
   }

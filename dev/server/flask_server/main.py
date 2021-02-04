@@ -86,8 +86,8 @@ def supermarkets_list():
         json_list = []
         for supermarket in sp_list:
             current_timetable = Timetable(json_timetable=json.loads(supermarket.timetable))
-            if current_timetable.isAvailable():
-            #if True:
+            #if current_timetable.isAvailable():
+            if True:
                 sp = {
                     "name": supermarket.name,
                     "address" : supermarket.address,
