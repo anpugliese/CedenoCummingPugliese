@@ -10,7 +10,7 @@
       <h5 style="text-align: center; padding-top: 5px;">Filters</h5>
       <div class="slidecontainer">
         <input type="range" min="1" max="100" value="50" v-model="slider_value">
-        <h6>slider value {{slider_value}}</h6>
+        <h6>Waiting time less than {{slider_value}}</h6>
       </div>
       <div class="check" v-for="sp in supermarkets_names" :key="sp.id">
         <label :for="sp.id">
@@ -27,7 +27,10 @@
     
 
     <div class="round-button">
-      <fa-icon :icon="['fas', 'running']" class="round-button-icon"/>
+      <NuxtLink to="/list">
+        <fa-icon :icon="['fas', 'running']" class="round-button-icon"/>
+      </NuxtLink>
+            
     </div>
 
     <div class="round-button">
@@ -52,8 +55,7 @@
       <l-map :zoom=13 :center="[map_lat, map_lng]" :options="map_options">
         <l-tile-layer url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"></l-tile-layer>
         <l-marker :lat-lng="[map_lat, map_lng]" 
-          :icon="icon">
-          
+          :icon="icon">          
         </l-marker>
 
         <!-- Iterate to render nearby supermarkets markers -->
@@ -78,6 +80,21 @@
               <span class="waiting-time">{{supermarket.waiting_time}} MINS</span>
             </div>
           </l-icon>
+          <l-popup>
+            <div style="width: 150px; padding:0;">
+              <h6 class="popup-title">{{supermarket.name}}</h6>
+              <div class="container-fluid" style="width: 100%; padding:0;">
+                <div class="row">
+                  <div class="col-6" style="padding-left:5px; padding-right: 5px; width: 100%">
+                    <button class="btn btn-primary btn-sm w-100" type="submit">Line up</button>
+                  </div>
+                  <div class="col-6" style="padding-left:5px; padding-right: 5px; width: 100%">
+                    <button class="btn btn-primary btn-sm w-100" type="submit">Book</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </l-popup>
         </l-marker>
 
         <l-control-zoom position="bottomleft"  ></l-control-zoom>
@@ -89,12 +106,13 @@
 </template>
 
 <script>
-  
+  import {mapActions, mapGetters} from 'vuex';
   import VueGeolocation from 'vue-browser-geolocation';
   export default{
     components: {
       VueGeolocation
     },
+    
     
     
     data: function () {
@@ -120,6 +138,7 @@
     },
     
     methods: {
+      ...mapActions({getToken: "auth/getToken"}),
       /* Get user's location */
       getLocation(){
         VueGeolocation.getLocation()
@@ -131,10 +150,13 @@
       },
 
       /* Bring the whole list of supermarkets from the database thru an endpoint */
-      loadSupermarkets(){
+      async loadSupermarkets(){
+        let token;
+        token = await this.getToken();
         fetch('http://127.0.0.1:5000/supermarkets_list', {
         method: 'GET',
         headers: {
+            'Authorization': 'JWT ' + token,
             'Content-Type': 'application/json',
         }
         })
@@ -234,8 +256,12 @@
           supermarket.active = false;
         }
         this.applyFilter();
-      }
+      },
 
+      
+
+
+    
     },
 
     computed: {
@@ -243,8 +269,12 @@
       new_supermarkets_list: function(){
         this.filterTrigger;
         let super_list = this.filterList();
-        let super_copy = super_list;
         return super_list
+      },
+
+      ...mapGetters({ auth: "auth/getAuthState"}),
+      isAuth(){
+        return this.auth;
       },
     },
 
@@ -258,6 +288,7 @@
       })
       /* load all supermarkets from the database */
       this.loadSupermarkets();
+      this.$token = 'hola';
     }
   }
 
@@ -425,6 +456,7 @@ img {
 .round-button-icon{
   margin-top: 14px;
   font-size: 22px;
+  color: white;
 }
 
 /* for filter according to waiting time: red, green and yellow*/
@@ -477,6 +509,11 @@ button {
 
 button:hover {
   opacity: 0.8;
+}
+
+.popup-title{
+  font-weight: bold;
+  text-align: center;
 }
 
 </style>

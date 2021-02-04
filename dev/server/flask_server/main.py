@@ -16,12 +16,13 @@ def authenticate(username, password):
 #Identity function for JWT
 def identity(payload):
     user_id = payload['identity']
-    return User.query.get(user_id)
+    print(User.query.get(user_id))
+    return User.query.get(user_id) is not None
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=12) #Session time
+app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=2) #Session time
 db = SQLAlchemy(app)
 jwt = JWT(app, authenticate, identity) #JWT Json Web Token to manage sessions, by default managed in /auth (POST request)
 CORS(app)
@@ -74,14 +75,15 @@ def supermarket():
 #Retrieve all supermarkets (filter only in frontend)
 @cross_origin(origin='*')
 @app.route('/supermarkets_list', methods=['GET'])
+@jwt_required()
 def supermarkets_list():
     try:
         sp_list = Supermarket.query.all()
         json_list = []
         for supermarket in sp_list:
             current_timetable = Timetable(json_timetable=json.loads(supermarket.timetable))
-            #if current_timetable.isAvailable():
-            if True:
+            if current_timetable.isAvailable():
+            #if True:
                 sp = {
                     "name": supermarket.name,
                     "address" : supermarket.address,

@@ -1,47 +1,25 @@
 <template>
     <div>
-        <!-- Login form -->
-        <div class="container">
-            <img src="../assets/img/logo_clup_black_large.png" >
-            <h3 style="text-align:left; padding-top:20px; padding-bottom:20px;">Login</h3>
-        
-            <label for="username"><h6 style="color: #4a0d70;">Username</h6></label>
-            <input v-model="username" type="text" placeholder="example@email.com" name="username" required>
-
-            <label for="password"><h6 style="color: #4a0d70;">Password</h6></label>
-            <input v-model="password" type="password" placeholder="password" name="password" required>
-                
-            <button @click="login()" type="submit"><b>Login</b></button>
-            
-        </div>
-
-        <div class="container">
-            <p>Or create an account <span class="highlight"><NuxtLink to="/register" style="color: #4a0d70; font-weight: bold;">Sign up</NuxtLink></span></p>
-        </div>
+        <h4>Buy as soon as possible</h4>
+        <h5>{{token}}</h5>
         
     </div>
 </template>
 
 <script>
-import {mapActions, mapGetters} from 'vuex';
-
 export default {
     data: function () {
       return {
-        username: '',
-        password: '',
-        login_success: false,
+        selected_supermarket: '',
+        token: '',
       }
     },
     methods: {
-
-        ...mapActions({saveToken: "auth/login"}),
-
         /* login function to send data and get a response from the server */ 
-        login(){
-            const data = { username: this.username, password: this.password };
+        lineUp(){
+            const data = { username: this.username, supermarket: this.supermarket };
 
-            fetch('http://127.0.0.1:5000/auth', {
+            fetch('http://127.0.0.1:5000/xxx', {
             method: 'POST', // or 'PUT'
             headers: {
                 'Content-Type': 'application/json',
@@ -52,13 +30,10 @@ export default {
                 
                 console.log(response);
                 if(response.status == 200){
-                    this.login_success = true;
+
                     response.json().then(data => {
                         console.log('Success:', data);
-                        if(this.login_success){
-                            this.saveToken(data.access_token);
-                            this.$router.push("/");
-                        }
+                        
                     })
                 } 
             })
@@ -67,6 +42,10 @@ export default {
             });
         }
 
+    },
+
+    mounted(){
+        this.token = this.$token;
     }
 }
 </script>
