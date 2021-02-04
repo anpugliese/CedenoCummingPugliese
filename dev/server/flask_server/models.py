@@ -37,7 +37,7 @@ class Supermarket(db.Model):
         self.logo = None
         self.lat = lat
         self.lon = lon
-        self.max_capacity = 3
+        self.max_capacity = 1
         self.timetable = Timetable().toJson()
         self.waiting_time = 0
         self.mean_shopping_time = 10 
@@ -61,25 +61,25 @@ class Section(db.Model):
     def __repr__(self):
         return '<id {}>'.format(self.id)
 
-class Request(db.Model):
-    __tablename__ = 'Request'
+# class Request(db.Model):
+#     __tablename__ = 'Request'
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(), unique=True, nullable=False)
-    supermarket_id = db.Column(db.Integer, nullable=False)
-    time = db.Column(db.DateTime, nullable=False)
-    type_id = db.Column(db.String(), nullable=False) #2 options: 'ASAP' or 'Booking'... can be also True or False
-    token = db.Column(db.String(), nullable=False)
+#     id = db.Column(db.Integer, primary_key=True)
+#     username = db.Column(db.String(), unique=True, nullable=False)
+#     supermarket_id = db.Column(db.Integer, nullable=False)
+#     time = db.Column(db.DateTime, nullable=False)
+#     type_id = db.Column(db.String(), nullable=False) #2 options: 'ASAP' or 'Booking'... can be also True or False
+#     token = db.Column(db.String(), nullable=False)
 
-    def __init__(self, username, supermarket_id, time, type_id, token):
-        self.username = username
-        self.supermarket_id = supermarket_id
-        self.time = time
-        self.type_id = type_id
-        self.token = token
+#     def __init__(self, username, supermarket_id, time, type_id, token):
+#         self.username = username
+#         self.supermarket_id = supermarket_id
+#         self.time = time
+#         self.type_id = type_id
+#         self.token = token
 
-    def __repr__(self):
-        return '<id {}>'.format(self.id)
+#     def __repr__(self):
+#         return '<id {}>'.format(self.id)
 
 class Shopping(db.Model):
     __tablename__ = 'Shopping'
@@ -107,14 +107,15 @@ class Waiting(db.Model):
     username = db.Column(db.String(), unique=True, nullable=False)
     token = db.Column(db.String(), nullable=False)
     supermarket_id = db.Column(db.Integer, nullable=False)
-    waiting_time = db.Column(db.DateTime, nullable=False)
-    
+    req_time = db.Column(db.DateTime, nullable=False)
+    shop_time = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, username, token, supermarket_id, waiting_time):
+    def __init__(self, username, token, supermarket_id, req_time, shop_time):
         self.username = username
         self.token = token
         self.supermarket_id = supermarket_id
-        self.waiting_time = waiting_time
+        self.req_time = req_time
+        self.shop_time = shop_time
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
