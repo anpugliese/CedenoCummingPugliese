@@ -24,13 +24,13 @@ def identity(payload):
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=2) #Session time
+app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=24*60) #Session time
 db = SQLAlchemy(app)
 jwt = JWT(app, authenticate, identity) #JWT Json Web Token to manage sessions, by default managed in /auth (POST request)
 CORS(app)
 
 #This must be declared after declaring db
-from models import User, Supermarket, Request
+from models import User, Supermarket, Waiting, Shopping, Record
 from timetable import Timetable
 
 @app.route('/protected')
@@ -55,36 +55,7 @@ def register():
         print(ex)
         return {"error": "Error"}, 400
 
-#Booking function for selected supermarket
-@cross_origin(origin='*')
-@app.route('/booking', methods=['POST'])
-def booking():
-    try:
-        print(request.json)
-        user_id = request.json.get('user_id')
-        superid = request.json.get('superid')
-        #date_time = request.json.get('timeid')
-        date_time = datetime.datetime.now()
-        typeid = 'Booking' 
 
-        repeatedUser = Request.query.filter_by(user_id=user_id).first()
-        maxBookings = Request.query.filter_by(time=date_time, supermarket_id=superid).count()
-        
-        if maxBookings > 3:
-            return {"message": "Booking Time is Full."}, 201
-        elif repeatedUser == None:
-            print(user_id)
-            print(user_id, superid, date_time, typeid)
-            booking_token = secrets.token_bytes(10)
-            bookingreq = Request(user_id, superid, date_time, typeid, booking_token)
-            db.session.add(bookingreq)
-            db.session.commit()
-            return {"message": "Booking has been created."}, 201
-        else:
-            return {"error": "You already Have a Booking."}, 400
-    except Exception as ex:
-        print(ex)
-        return {"error": "Error"}, 400
 
 #Populate database with supermarkets from supermarkets.json, only used once while developing 
 """@cross_origin(origin='*')
@@ -130,6 +101,195 @@ def supermarkets_list():
                 }
                 json_list.append(sp)
         return {"supermarkets": json_list}
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+
+
+def averageTime(supermarket):
+    delta_times = []
+    records = Record.query.filter_by(supermarket_id=supermarket.id).all()
+    for record in records:
+        delta_times.append(record.delta_time)
+    avg_time=np.mean(np.array(delta_times))
+    records_count=len(records)
+    if records_count>0:
+        return avg_time
+    else:
+        return supermarket.mean_shopping_time*60
+
+def isAvailable(supermarket_id):
+    people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
+    supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+    if people_shopping<supermarket.max_capacity:
+        print('isavailable')
+        return True
+    else:
+        print('isNOTavailable')
+        return False
+
+@cross_origin(origin='*')
+@app.route('/lineup', methods=['POST'])
+@jwt_required()
+def lineup():
+    try:
+        print(request.json)
+        username = request.json.get('username')
+        supermarket_id = request.json.get('supermarket_id')
+        date_time = datetime.datetime.now()
+        requests = Waiting.query.filter_by(username=username).count()
+        requests += Shopping.query.filter_by(username=username).count()
+        if requests < 1:
+            token = username#secrets.token_hex(8)
+            waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
+            db.session.add(waitingreq)
+            db.session.commit()
+            return {"message": "Line-up has been created."}, 201
+        else:
+            return {"error": "You already Have a Request."}, 400
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+
+#Booking function for selected supermarket
+@cross_origin(origin='*')
+@app.route('/booking', methods=['POST'])
+@jwt_required()
+def booking():
+    try:
+        print(request.json)
+        username = request.json.get('username')
+        supermarket_id = request.json.get('supermarket_id')
+        shop_time_raw = request.json.get('shop_time')
+        shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
+        date_time = datetime.datetime.now()
+
+        requests = Waiting.query.filter_by(username=username).count()
+        requests += Shopping.query.filter_by(username=username).count()
+        if requests < 1:
+        # if maxBookings > 3:
+        #     return {"message": "Booking Time is Full."}, 400
+            token = username#secrets.token_hex(8)
+            waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
+            db.session.add(waitingreq)
+            db.session.commit()
+            return {"message": "Booking has been created."}, 201
+        else:
+            return {"error": "You already have a booking."}, 401
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+
+def isTurn(username,supermarket_id):
+    dt_now = datetime.datetime.now()
+    userWithTurn=db.session.query(Waiting).filter(
+        and_(Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5),Waiting.supermarket_id == supermarket_id)).order_by(
+            Waiting.req_time).first()
+    if userWithTurn!=None and userWithTurn.username==username and isAvailable(supermarket_id):
+        return True
+    else:
+        return False
+def updateWaitingTime(supermarket_id):
+    supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+    if isAvailable(supermarket_id):
+        print('está disponible')
+        supermarket.waiting_time = 0
+    else:
+        peopleShopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
+        supermarket.waiting_time = averageTime(supermarket)*peopleShopping
+    db.session.commit()
+
+@cross_origin(origin='*')
+@app.route('/getin', methods=['POST'])
+@jwt_required()
+def getin():
+    try:
+        print(request.json)
+        token = request.json.get('token')
+        waitingUser = Waiting.query.filter_by(token=token).first()
+        if waitingUser!=None:
+            username=waitingUser.username
+            supermarket_id = request.json.get('supermarket_id')
+            date_time = datetime.datetime.now()
+            if isTurn(username,supermarket_id):
+                updateWaitingTime(supermarket_id)
+                db.session.delete(waitingUser)
+                db.session.commit()
+                shoppingreq = Shopping(username, token, supermarket_id, date_time)
+                db.session.add(shoppingreq)
+                db.session.commit()
+
+                return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
+            else:
+                return {"error": "It is not your turn."}, 400
+        else:
+            return {"error": "Wrong token"}, 400
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+
+@cross_origin(origin='*')
+@app.route('/getout', methods=['POST'])
+@jwt_required()
+def getout():
+    try:
+        print(request.json)
+        token = request.json.get('token')
+        shoppingUser = Shopping.query.filter_by(token=token).first()
+        if shoppingUser!=None:
+            username=shoppingUser.username
+            supermarket_id = request.json.get('supermarket_id')
+            updateWaitingTime(supermarket_id)
+            date_time = datetime.datetime.now()
+            enter_time = shoppingUser.enter_time
+            db.session.delete(shoppingUser)
+            db.session.commit()
+            record = Record(enter_time, date_time, supermarket_id, (date_time-enter_time).seconds)
+            db.session.add(record)
+            db.session.commit()
+            
+            return {"message": "The door is opened. "+str(username)+" has leaved from ID: "+str(supermarket_id)}, 201
+        else:
+            return {"error": "User is not Shopping"}, 400 
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+
+
+@cross_origin(origin='*')
+@app.route('/deleteall_w', methods=['POST'])
+@jwt_required()
+def deleteall_w():
+    try:
+        Waiting.query.delete()
+        db.session.commit()
+        return {"message": "All waiting users have been deleted"}, 201
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+
+@cross_origin(origin='*')
+@app.route('/deleteall_s', methods=['POST'])
+@jwt_required()
+def deleteall_s():
+    try:
+        Shopping.query.delete()
+        db.session.commit()
+        return {"message": "All shopping users have been deleted"}, 201
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+
+@cross_origin(origin='*')
+@app.route('/deleteall', methods=['POST'])
+@jwt_required()
+def deleteall():
+    try:
+        Waiting.query.delete()
+        db.session.commit()
+        Shopping.query.delete()
+        db.session.commit()
+        return {"message": "All waiting & shopping users have been deleted"}, 201
     except Exception as ex:
         print(ex)
         return {"error": "Error"}, 400

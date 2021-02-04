@@ -60,7 +60,7 @@
 
         <!-- Iterate to render nearby supermarkets markers -->
         <l-marker 
-          v-for="supermarket in new_supermarkets_list"
+          v-for="(supermarket,index) in new_supermarkets_list"
           :key="supermarket.id"
           :lat-lng="[supermarket.lat, supermarket.lon]" 
           :icon="icon" 
@@ -70,8 +70,11 @@
             class-name="someExtraClass"
           >
           <!-- Filter according to waiting time (now just max capacity, waiting time has to be added) -->
+            <!-- <div class="supermarket-card" style="margin: 2px;"
+              bind:class="paintMarker(supermarket.waiting_time)"> -->
+            <!-- {{supermarket.waiting_time}} -->
             <div class="supermarket-card" style="margin: 2px;"
-              :class="{'red-marker': supermarket.max_capacity < 10, 'green-marker': supermarket.max_capacity < 30 && supermarket.max_capacity >= 10}"
+              :class="{'red-marker': supermarket.waiting_time >= 300, 'yellow-marker': supermarket.max_capacity < 300 && supermarket.max_capacity >= 60, 'green-marker': supermarket.max_capacity < 60}"
             >
               <div style="background-color: white;">
                 <img width="50" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Carrefour_logo.svg/1000px-Carrefour_logo.svg.png">
@@ -86,7 +89,7 @@
               <div class="container-fluid" style="width: 100%; padding:0;">
                 <div class="row">
                   <div class="col-6" style="padding-left:5px; padding-right: 5px; width: 100%">
-                    <button class="btn btn-primary btn-sm w-100" type="submit">Line up</button>
+                    <button class="btn btn-primary btn-sm w-100" v-on:click="lineup(index)" type="submit">Line up</button>
                   </div>
                   <div class="col-6" style="padding-left:5px; padding-right: 5px; width: 100%">
                     <button class="btn btn-primary btn-sm w-100" type="submit">Book</button>
@@ -256,6 +259,27 @@
           supermarket.active = false;
         }
         this.applyFilter();
+      },
+      /* lineup function to send data and get a response from the server */
+
+      async lineup(sm_id){
+        let token;
+        token = await this.getToken();
+        const data = { supermarket_id: sm_id, username: this.username };
+        fetch('http://127.0.0.1:5000/lineup', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'JWT ' + token,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        })
+        .then(response => {
+          console.log(response);
+        })
+        .catch((error) => {
+        console.error('Error:', error);
+        });
       },
 
       
