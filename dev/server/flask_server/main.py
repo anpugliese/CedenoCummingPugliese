@@ -90,13 +90,20 @@ def supermarket():
         supermarkets_dict = json.loads(f.read())
         g = open("data/images.json")
         images_dict = json.loads(g.read())
+        regex = re.compile('[^a-zA-Z]')
         for supermarket in supermarkets_dict:
             name = supermarket["name"]
+            aux=True
             for imgs in images_dict:
-                if imgs["name"] in string.l
+                if imgs["name"] in regex.sub('', name).lower()
+                    logo=imgs["url"]
+                    aux=False
+                    break
+            if aux:
+                logo="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Italian_traffic_signs_-_icona_supermercato.svg/1024px-Italian_traffic_signs_-_icona_supermercato.svg.png"
             lat = supermarket["lat"]
             lon = supermarket["lon"]
-            sp = Supermarket(name, lat, lon)
+            sp = Supermarket(name, lat, lon, logo)
             db.session.add(sp) 
             db.session.commit()
         return {"message": "supermarket have been created."}, 201
