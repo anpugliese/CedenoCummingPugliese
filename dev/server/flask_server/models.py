@@ -65,14 +65,18 @@ class Request(db.Model):
     __tablename__ = 'Request'
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, nullable=False)
     supermarket_id = db.Column(db.Integer, nullable=False)
     time = db.Column(db.DateTime, nullable=False)
     type_id = db.Column(db.String(), nullable=False) #2 options: 'ASAP' or 'Booking'... can be also True or False
+    booking_token = db.Column(db.String(), nullable=False)
 
-    def __init__(self, supermarket_id, type_id):
+    def __init__(self, user_id, supermarket_id, time, type_id, booking_token):
+        self.user_id = user_id
         self.supermarket_id = supermarket_id
         self.time = time
         self.type_id = type_id
+        self.booking_token = booking_token
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
