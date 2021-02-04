@@ -1,51 +1,88 @@
 <template>
     <div>
-        <h4>Buy as soon as possible</h4>
-        <h5>{{token}}</h5>
+        <div class="container">
+            <img src="../assets/img/logo_clup_black_large.png" >
+            <h3 style="text-align:left; padding-top:20px; padding-bottom:20px;">Buy as soon as possible</h3>
+            <div 
+                v-for="supermarket in stored_supermarkets_list"
+                :key="supermarket.id"
+            >
+                <div class="card border-secondary mb-3" :class="{'red-marker': supermarket.waiting_time >= 300, 'yellow-marker': supermarket.waiting_time < 300 && supermarket.waiting_time >= 60, 'green-marker': supermarket.waiting_time < 60}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{supermarket.name}}</h5>
+                        <p class="card-text">{{supermarket.waiting_time}} minutes waiting time</p>
+                        <button
+                            class="btn btn-primary btn-sm w-100" 
+                            type="submit" 
+                            @click="LineUpSupermarket(supermarket.id)"
+                        >
+                            Line up
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
         
     </div>
 </template>
 
 <script>
+import {mapActions, mapGetters} from 'vuex';
 export default {
     data: function () {
       return {
-        selected_supermarket: '',
-        token: '',
       }
     },
     methods: {
+        ...mapActions({
+            getToken: "auth/getToken", 
+            getUsername: "auth/getUsername",
+            setSupermarketList: "supermarket/setSupermarketList",
+            setSelectedSupermarket: "supermarket/setSelectedSupermarket",
+        }),
         /* login function to send data and get a response from the server */ 
-        lineUp(){
-            const data = { username: this.username, supermarket: this.supermarket };
+        async LineUpSupermarket(s_id){
+            console.log(s_id);
+            await this.setSelectedSupermarket(s_id);
+            await console.log(this.selected_supermarket);
+            this.lineup(selected_supermarket);
+        },
 
-            fetch('http://127.0.0.1:5000/xxx', {
-            method: 'POST', // or 'PUT'
+        async lineup(sm_id){
+            let token = await this.getToken();
+            let username = await this.username;
+            console.log(username);
+            const data = { supermarket_id: sm_id, username: username };
+            fetch('http://127.0.0.1:5000/lineup', {
+            method: 'POST',
             headers: {
+                'Authorization': 'JWT ' + token,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(data),
             })
             .then(response => {
-                
-                console.log(response);
-                if(response.status == 200){
-
-                    response.json().then(data => {
-                        console.log('Success:', data);
-                        
-                    })
-                } 
+            console.log(response);
             })
             .catch((error) => {
             console.error('Error:', error);
             });
-        }
+        },
 
     },
 
-    mounted(){
-        this.token = this.$token;
+    computed: {
+            ...mapGetters({ 
+                auth: "auth/getAuthState" , 
+                username1: "auth/getUsername",
+                selected_supermarket: "supermarket/getSelectedSupermarket",
+                stored_supermarkets_list: "supermarket/getSupermarketList"
+            }),
+        },
+
+    async mounted(){
+        this.username = await this.getUsername();
     }
 }
 </script>
@@ -60,17 +97,6 @@ export default {
     border-left: none;
     border-right: none;
     border-bottom: 1px solid #ccc;
-    }
-
-    button {
-    background-color: #4a0d70;
-    color: white;
-    border-radius: 4px;
-    padding: 14px 20px;
-    margin: 8px 0;
-    border: none;
-    cursor: pointer;
-    width: 100%;
     }
 
     button:hover {
@@ -106,5 +132,18 @@ export default {
     .cancelbtn {
         width: 100%;
     }
+    }
+
+    /* for filter according to waiting time: red, green and yellow*/
+    .red-marker{
+    background-color: #c43939;
+    }
+
+    .green-marker{
+    background-color: #27bd2e;
+    }
+
+    .yellow-marker{
+    background-color: #c2bf1a;
     }
 </style>
