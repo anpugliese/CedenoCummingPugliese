@@ -272,10 +272,13 @@
         return super_list
       },
 
-      ...mapGetters({ auth: "auth/getAuthState"}),
+      ...mapGetters({ auth: "auth/getAuthState" , username: "auth/getUsername"}),
       isAuth(){
         return this.auth;
       },
+      getUsername(){
+        return this.username;
+      }
     },
 
     mounted(){
