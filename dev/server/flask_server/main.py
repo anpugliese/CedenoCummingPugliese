@@ -2,6 +2,12 @@ import os
 import json
 import secrets
 import datetime
+<<<<<<< Updated upstream
+=======
+import string
+import re
+from datetime import timedelta
+>>>>>>> Stashed changes
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
@@ -57,6 +63,7 @@ def register():
         return {"error": "Error"}, 400
 
 #Populate database with supermarkets from supermarkets.json, only used once while developing 
+<<<<<<< Updated upstream
 # @cross_origin(origin='*')
 # @app.route('/supermarkets', methods=['GET'])
 # def supermarket():
@@ -74,6 +81,29 @@ def register():
 #     except Exception as ex:
 #         print(ex)
 #         return {"error": "Error"}, 400
+=======
+@cross_origin(origin='*')
+@app.route('/supermarkets', methods=['GET'])
+def supermarket():
+    try:
+        f = open("data/supermarkets.json")
+        supermarkets_dict = json.loads(f.read())
+        g = open("data/images.json")
+        images_dict = json.loads(g.read())
+        for supermarket in supermarkets_dict:
+            name = supermarket["name"]
+            for imgs in images_dict:
+                if imgs["name"] in string.l
+            lat = supermarket["lat"]
+            lon = supermarket["lon"]
+            sp = Supermarket(name, lat, lon)
+            db.session.add(sp) 
+            db.session.commit()
+        return {"message": "supermarket have been created."}, 201
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+>>>>>>> Stashed changes
 
 #Retrieve all supermarkets (filter only in frontend)
 @cross_origin(origin='*')

@@ -31,10 +31,10 @@ class Supermarket(db.Model):
     waiting_time = db.Column(db.Integer, nullable=False, server_default='0') #Time in minutes managed as integers
     mean_shopping_time = db.Column(db.Integer, nullable=False, server_default='10') #Mean shopping time to be updated when a user finishes the shopping
     #Constructor of the class supermarket...specify the proccess of creating a new supermarket
-    def __init__(self, name, lat, lon):
+    def __init__(self, name, lat, lon, logo):
         self.name = name
         self.address = None
-        self.logo = None
+        self.logo = logo
         self.lat = lat
         self.lon = lon
         self.max_capacity = 1
