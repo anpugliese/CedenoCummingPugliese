@@ -6,6 +6,8 @@
         <div class="container">
             <img src="../assets/img/logo_clup_black_large.png" >
             <h3 style="text-align:lefdt; padding-top:20px; padding-bottom:20px;">Booking 'Supermarket'</h3>
+            <h5>the selected supermarket is {{selected_supermarket}}</h5>
+            <h5>current username is {{username}}</h5>
             
             <!-- <label for="datetime"><h6 style="color: #4a0d70;">Date and Time</h6></label> -->
             <label for="username"><h6 style="color: #4a0d70;">Username</h6></label>
@@ -111,6 +113,7 @@
 
 <script>
     // import Datetime from 'vue-datetime';
+    import {mapActions, mapGetters} from 'vuex';
     export default{
             
         data: function () {
@@ -127,14 +130,21 @@
             }
         },
         methods: {
-/*             showFlashMessage(element){
+            ...mapActions({
+                getToken: "auth/getToken", 
+                getUsername: "auth/getUsername",
+                setSupermarketList: "supermarket/setSupermarketList",
+                setSelectedSupermarket: "supermarket/setSelectedSupermarket",
+            }),
+            
+            /*  showFlashMessage(element){
                 var event = new CustomEvent('showFlashMessage');
                 element.dispatchEvent(event);
             }, */
             /* register function to send data and get a response from the server */ 
             booking(){                
                 // datestr = datestr.concat(String(year), "-", String(month))
-                const data = { username: this.username,  supermarket_id: this.supermarket_id, shop_time: this.year+'-'+this.month+'-'+this.day+' '+this.hour+':'+this.minute }
+                const data = { username: this.username,  supermarket_id: this.selected_supermarket, shop_time: this.year+'-'+this.month+'-'+this.day+' '+this.hour+':'+this.minute }
                 fetch('http://127.0.0.1:5000/booking', {
                 method: 'POST', 
                 headers: {
@@ -168,7 +178,21 @@
                 console.error('Error:', error);
                 });
             }
+        },
+
+        computed: {
+            ...mapGetters({ 
+                auth: "auth/getAuthState" , 
+                username1: "auth/getUsername",
+                selected_supermarket: "supermarket/getSelectedSupermarket",
+                stored_supermarkets_list: "supermarket/getSupermarketList"
+            }),
+        },
+
+        async mounted(){
+            this.username = await this.getUsername();
         }
+
     }
 </script>
 

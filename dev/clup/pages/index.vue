@@ -60,7 +60,7 @@
 
         <!-- Iterate to render nearby supermarkets markers -->
         <l-marker 
-          v-for="(supermarket,index) in new_supermarkets_list"
+          v-for="supermarket in new_supermarkets_list"
           :key="supermarket.id"
           :lat-lng="[supermarket.lat, supermarket.lon]" 
           :icon="icon" 
@@ -74,7 +74,7 @@
               bind:class="paintMarker(supermarket.waiting_time)"> -->
             <!-- {{supermarket.waiting_time}} -->
             <div class="supermarket-card" style="margin: 2px;"
-              :class="{'red-marker': supermarket.waiting_time >= 300, 'yellow-marker': supermarket.max_capacity < 300 && supermarket.max_capacity >= 60, 'green-marker': supermarket.max_capacity < 60}"
+              :class="{'red-marker': supermarket.waiting_time >= 300, 'yellow-marker': supermarket.waiting_time < 300 && supermarket.waiting_time >= 60, 'green-marker': supermarket.waiting_time < 60}"
             >
               <div style="background-color: white;">
                 <img width="50" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Carrefour_logo.svg/1000px-Carrefour_logo.svg.png">
@@ -89,10 +89,16 @@
               <div class="container-fluid" style="width: 100%; padding:0;">
                 <div class="row">
                   <div class="col-6" style="padding-left:5px; padding-right: 5px; width: 100%">
-                    <button class="btn btn-primary btn-sm w-100" v-on:click="lineup(index)" type="submit">Line up</button>
+                    <button class="btn btn-primary btn-sm w-100" v-on:click="lineup(supermarket.id)" type="submit">Line up</button>
                   </div>
                   <div class="col-6" style="padding-left:5px; padding-right: 5px; width: 100%">
-                    <button class="btn btn-primary btn-sm w-100" type="submit">Book</button>
+                    <button
+                     class="btn btn-primary btn-sm w-100" 
+                     type="submit" 
+                     @click="bookSupermarket(supermarket.id)"
+                    >
+                      Book
+                    </button>
                   </div>
                 </div>
               </div>
@@ -141,7 +147,11 @@
     },
     
     methods: {
-      ...mapActions({getToken: "auth/getToken"}),
+      ...mapActions({
+        getToken: "auth/getToken", 
+        setSupermarketList: "supermarket/setSupermarketList",
+        setSelectedSupermarket: "supermarket/setSelectedSupermarket",
+      }),
       /* Get user's location */
       getLocation(){
         VueGeolocation.getLocation()
@@ -150,6 +160,13 @@
           this.map_lng = coordinates.lng;
           console.log(coordinates);
         });
+      },
+
+      async bookSupermarket(s_id){
+        console.log(s_id);
+        await this.setSelectedSupermarket(s_id);
+        await console.log(this.selected_supermarket);
+        this.$router.push("/booking");
       },
 
       /* Bring the whole list of supermarkets from the database thru an endpoint */
@@ -184,7 +201,7 @@
         return distance;
       },
       /* Takes the slider value and the checked supermarkets */
-      applyFilter(){
+      async applyFilter(){
         this.filterWaitingTime = this.slider_value;
         this.filterName = [];
         for(let i in this.supermarkets_names){
@@ -192,7 +209,6 @@
             this.filterName.push(this.supermarkets_names[i].name);
           }
         }
-        
       },
       /* Lists the filter names  */
       updateFilterNames(super_list){
@@ -290,18 +306,20 @@
     },
 
     computed: {
+      ...mapGetters({ 
+        auth: "auth/getAuthState" , 
+        username: "auth/getUsername",
+        selected_supermarket: "supermarket/getSelectedSupermarket",
+        stored_supermarkets_list: "supermarket/getSupermarketList"
+      }),
+
       /* Dynamic function to update the list of nearby supermarkets */
       new_supermarkets_list: function(){
         this.filterTrigger;
         let super_list = this.filterList();
+        this.setSupermarketList(super_list);
         return super_list
       },
-
-      ...mapGetters({ auth: "auth/getAuthState" , username: "auth/getUsername"}),
-      isAuth(){
-        return this.auth;
-      },
-     
     },
 
     mounted(){
@@ -491,7 +509,7 @@ img {
 }
 
 .green-marker{
-  background-color: #2bb660;
+  background-color: #27bd2e;
 }
 
 .yellow-marker{

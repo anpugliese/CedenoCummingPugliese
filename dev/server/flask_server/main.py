@@ -89,6 +89,7 @@ def supermarkets_list():
             #if current_timetable.isAvailable():
             if True:
                 sp = {
+                    "id": supermarket.id,
                     "name": supermarket.name,
                     "address" : supermarket.address,
                     "logo" : supermarket.logo,
