@@ -1,38 +1,24 @@
-@pytest.fixture(scope='session')
-def database(request):
-    '''
-    Create a Postgres database for the tests, and drop it when the tests are done.
-    '''
-    pg_host = DB_OPTS.get("host")
-    pg_port = DB_OPTS.get("port")
-    pg_user = DB_OPTS.get("username")
-    pg_db = DB_OPTS["database"]
-
-    init_postgresql_database(pg_user, pg_host, pg_port, pg_db)
-
-    @request.addfinalizer
-    def drop_database():
-        drop_postgresql_database(pg_user, pg_host, pg_port, pg_db, 10)
-
+import pytest
+from ..main import create_app, db
 
 @pytest.fixture(scope='session')
-def app(database):
-    '''
-    Create a Flask app context for the tests.
-    '''
-    app = Flask(__name__)
-
-    app.config['SQLALCHEMY_DATABASE_URI'] = DB_CONN
-
-    return app
-
+def app():
+    app = create_app(testing=True)
+    with app.app_context():   
+        # alternative pattern to app.app_context().push()
+        # all commands indented under 'with' are run in the app context 
+        try:
+            db.create_all()
+            db.session.commit()
+            yield app   # Note that we changed return for yield, see below for why
+        except Exception as ex:
+            print("asdf")
+            print(ex)
+    
+        db.session.remove()
+        db.drop_all()
 
 @pytest.fixture(scope='session')
-def _db(app):
-    '''
-    Provide the transactional fixtures with access to the database via a Flask-SQLAlchemy
-    database connection.
-    '''
-    db = SQLAlchemy(app=app)
-
-    return db
+def test_client(app):
+    with app.test_client() as client:
+        yield client
