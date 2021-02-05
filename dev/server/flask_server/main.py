@@ -59,7 +59,7 @@ def register():
 
 
 
-#Populate database with supermarkets from supermarkets.json, only used once while developing 
+# Populate database with supermarkets from supermarkets.json, only used once while developing 
 # @cross_origin(origin='*')
 # @app.route('/supermarkets', methods=['GET'])
 # def supermarket():
@@ -180,11 +180,14 @@ def booking():
 
         requests = Waiting.query.filter_by(username=username).count()
         requests += Shopping.query.filter_by(username=username).count()
+        print(requests)
+        maxBookings = Waiting.query.filter_by(supermarket_id=supermarket_id, shop_time=shop_time).count()
+        
+        if maxBookings > 1:
+            return {"message": "Booking Time is Full."}, 400
         if requests < 1:
-        # if maxBookings > 3:
-        #     return {"message": "Booking Time is Full."}, 400
-            token = username#secrets.token_hex(8)
-            waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
+            token = secrets.token_hex(8)
+            waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time)
             db.session.add(waitingreq)
             db.session.commit()
             return {"message": "Booking has been created."}, 201
