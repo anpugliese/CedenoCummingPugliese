@@ -6,14 +6,15 @@
         <div class="container">
             <img src="../assets/img/logo_clup_black_large.png" >
             <h3 style="text-align:lefdt; padding-top:20px; padding-bottom:20px;">Booking 'Supermarket'</h3>
-            <h5>the selected supermarket is {{selected_supermarket}}</h5>
-            <h5>current username is {{username}}</h5>
+            <h5 style="color: #4a0d70;">Hello {{username}}!</h5>
+            <h5 style="color: #4a0d70;">Please select your date and time:</h5>
+            <!-- <h5>the selected supermarket is {{selected_supermarket}}</h5> -->
             
             <!-- <label for="datetime"><h6 style="color: #4a0d70;">Date and Time</h6></label> -->
-            <label for="username"><h6 style="color: #4a0d70;">Username</h6></label>
-            <input v-model="username" type="text" placeholder="enter user id...">
-            
-            <label><h6 style="color: #4a0d70;">Date and Time:</h6></label>
+            <!-- <label for="username"><h6 style="color: #4a0d70;">Username</h6></label>
+            <input v-model="username" type="text" placeholder="enter user id..."> -->
+<!--             
+            <label><h6 style="color: #4a0d70;">Date and Time:</h6></label> -->
             <br>
             <label><h6 style="color: #4a0d70;">Year:</h6></label>
             <select v-model="year" type="text">
@@ -97,13 +98,15 @@
                 <option>24</option>
             </select>
             <label><h6 style="color: #4a0d70;">Minute:</h6></label>
-            <select v-model="hour" type = "selected">
-                <option v-for="index in 60" :key="index">{{index}}</option>
+            <select v-model="minute" type = "selected">
+                <option>00</option>
+                <option>30</option>                
+                <!-- <option v-for="index in 60" :key="index">{{index}}</option> -->
             </select>
             <br>
             <!-- <input v-model="shop_time" type="text" placeholder="2021-03-01 16:00:00"> -->
-            <label for="supermarket_id"><h6 style="color: #4a0d70;">Supermarket ID</h6></label>
-            <input v-model="supermarket_id" type="text" placeholder="123">
+            <!-- <label for="supermarket_id"><h6 style="color: #4a0d70;">Supermarket ID</h6></label>
+            <input v-model="supermarket_id" type="text" placeholder="123"> -->
             <button @click="booking()" type="submit"><b>Book</b></button>
             
         </div>
@@ -142,7 +145,8 @@
                 element.dispatchEvent(event);
             }, */
             /* register function to send data and get a response from the server */ 
-            booking(){                
+            async booking(){     
+                let token = await this.getToken();           
                 // datestr = datestr.concat(String(year), "-", String(month))
                 const data = { username: this.username,  supermarket_id: this.selected_supermarket, shop_time: this.year+'-'+this.month+'-'+this.day+' '+this.hour+':'+this.minute }
                 fetch('http://127.0.0.1:5000/booking', {
