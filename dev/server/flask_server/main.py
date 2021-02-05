@@ -187,7 +187,7 @@ def booking():
             return {"message": "Booking Time is Full."}, 400
         if requests < 1:
             token = secrets.token_hex(8)
-            waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
+            waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time)
             db.session.add(waitingreq)
             db.session.commit()
             return {"message": "Booking has been created."}, 201
