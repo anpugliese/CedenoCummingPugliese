@@ -49,10 +49,10 @@ flask run
 ```
 For changes in the database model:
 ```
-python manage.py db migrate
-python manage.py db upgrade
+flask db migrate
+flask db upgrade
 #Only when there are problems upgrading the db and repeat the two first steps
-python manage.py db stamp head
+flask db stamp head
 ```
 
 To run the whole project locally, it is necessary to have a local postgres database and possibly changing config.py line 10:
