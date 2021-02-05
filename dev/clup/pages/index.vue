@@ -77,7 +77,7 @@
               :class="{'red-marker': supermarket.waiting_time >= 300, 'yellow-marker': supermarket.waiting_time < 300 && supermarket.waiting_time >= 60, 'green-marker': supermarket.waiting_time < 60}"
             >
               <div style="background-color: white;">
-                <img width="50" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Carrefour_logo.svg/1000px-Carrefour_logo.svg.png">
+                <img width="50" v-bind:src="supermarket.logo">
               </div>    
               <span class="waiting-time">{{supermarket.name}}</span>          
               <span class="waiting-time">{{supermarket.waiting_time}} MINS</span>

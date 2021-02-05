@@ -2,14 +2,18 @@ import os
 import json
 import secrets
 import datetime
+import string
+import re
 from datetime import timedelta
 from flask import Flask, request
 from flask_cors import CORS, cross_origin 
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
+from flask_migrate import Migrate, MigrateCommand
 
 db = SQLAlchemy()
+
 #This must be declared after declaring db
 from .models import *
 from .timetable import Timetable
@@ -43,6 +47,8 @@ def create_app(testing=False):
 
     jwt = JWT(app, authenticate, identity) #JWT Json Web Token to manage sessions, by default managed in /auth (POST request)
     CORS(app)
+
+    migrate = Migrate(app, db)
 
     #Register function to save users in the database, usernames(or emails) are unique
     @cross_origin(origin='*')
