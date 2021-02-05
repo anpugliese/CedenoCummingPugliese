@@ -60,3 +60,7 @@ To run the whole project locally, it is necessary to have a local postgres datab
 SQLALCHEMY_DATABASE_URI = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_DB"
 ```
 Creating a database with the name clup_DB with the same user "angelly" and password "123" or different user and changing config.py
+
+To test it is necessary to create a test database name 'clup_test_DB'
+*Consider that the commands for changes in the database are different
+Also run again step (2)
