@@ -179,7 +179,7 @@ def lineup():
             db.session.commit()
             return {"message": "Line-up has been created."}, 201
         else:
-            return {"error": "You already Have a Request."}, 400
+            return {"error": "You already Have a Request."}, 401
     except Exception as ex:
         print(ex)
         return {"error": "Error"}, 400
