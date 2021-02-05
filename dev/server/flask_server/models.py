@@ -1,6 +1,6 @@
-from main import db
+from .main import db
+from .timetable import Timetable
 from sqlalchemy.dialects.postgresql import JSON
-from timetable import Timetable
 
 #Definition of the class User to create a user inside the table users
 class User(db.Model):
@@ -10,7 +10,7 @@ class User(db.Model):
     username = db.Column(db.String(), unique=True, nullable=False)
     password = db.Column(db.String(), nullable=False)
 
-    def __init__(self, username, password):
+    def __init__(self, username, password): 
         self.username = username
         self.password = password
 
