@@ -208,6 +208,27 @@ def lineup():
 #         return {"error": "Error"}, 400
 
 
+<<<<<<< Updated upstream
+=======
+        requests = Waiting.query.filter_by(username=username).count()
+        requests += Shopping.query.filter_by(username=username).count()
+        maxBookings = Waiting.query.filter_by(supermarket_id=supermarket_id, shop_time=shop_time).count()
+        # supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+
+        if maxBookings > 1:
+            return {"message": "Booking Time is Full."}, 400
+        if requests < 1:
+            token = secrets.token_hex(8)
+            waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time)
+            db.session.add(waitingreq)
+            db.session.commit()
+            return {"message": "Booking has been created."}, 201
+        else:
+            return {"error": "You already have a booking."}, 401
+    except Exception as ex:
+        print(ex)
+        return {"error": "Error"}, 400
+>>>>>>> Stashed changes
 
 def isTurn(username,supermarket_id):
     dt_now = datetime.datetime.now()
