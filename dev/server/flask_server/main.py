@@ -195,8 +195,10 @@ def create_app(testing=False):
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()
             maxBookings = Waiting.query.filter_by(supermarket_id=supermarket_id, shop_time=shop_time).count()
-            if maxBookings > 3:
+            if maxBookings > 2:
                 return {"message": "Booking Time is Full."}, 402
+            if shop_time < date_time+datetime.timedelta(minutes=1) or shop_time > date_time+datetime.timedelta(days=7):
+                return {"message": "Invalid Booking Time."}, 403
             if requests < 1:
                 token = secrets.token_hex(8)
                 waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, time_to_turn)
@@ -251,7 +253,7 @@ def create_app(testing=False):
 
                     return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
                 else:
-                    return {"error": "It is not your turn."}, 400
+                    return {"error": "It is not your turn."}, 401
             else:
                 return {"error": "Wrong token"}, 400
         except Exception as ex:
@@ -279,7 +281,7 @@ def create_app(testing=False):
                 
                 return {"message": "The door is opened. "+str(username)+" has leaved from ID: "+str(supermarket_id)}, 201
             else:
-                return {"error": "User is not Shopping"}, 400 
+                return {"error": "User is not Shopping"}, 401
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
