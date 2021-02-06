@@ -34,7 +34,9 @@
     </div>
 
     <div class="round-button">
+      <NuxtLink to="/qrcode">
       <fa-icon :icon="['fas', 'qrcode']" class="round-button-icon"/>
+      </NuxtLink>
     </div>
   </div>
 
@@ -192,6 +194,7 @@
         })
         .catch((error) => {
         console.error('Error:', error);
+        this.$router.push('/login')
         });
       },
 
