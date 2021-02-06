@@ -192,6 +192,7 @@
         })
         .catch((error) => {
         console.error('Error:', error);
+        this.$router.push('/login')
         });
       },
 

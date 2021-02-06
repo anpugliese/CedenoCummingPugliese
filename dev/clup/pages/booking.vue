@@ -5,7 +5,7 @@
         <!-- Login form -->
         <div class="container">
             <img src="../assets/img/logo_clup_black_large.png" >
-            <h3 style="text-align:lefdt; padding-top:20px; padding-bottom:20px;">Booking 'Supermarket'</h3>
+            <h3 style="text-align:lefdt; padding-top:20px; padding-bottom:20px;">Booking {{selected_supermarket_name}}</h3>
             <h5 style="color: #4a0d70;">Hello {{username}}!</h5>
             <h5 style="color: #4a0d70;">Please select your date and time:</h5>
             <!-- <h5>the selected supermarket is {{selected_supermarket}}</h5> -->
@@ -129,7 +129,8 @@
                 day:'',
                 hour:'',
                 minute:'',
-                register_success: false
+                selected_supermarket_name: '',
+
             }
         },
         methods: {
@@ -181,6 +182,15 @@
                 .catch((error) => {
                 console.error('Error:', error);
                 });
+            },
+
+            async seletedSupermarketName(){
+                for(let i in await this.stored_supermarkets_list){
+                    let supermarket = this.stored_supermarkets_list[i];
+                    if(supermarket.id == this.selected_supermarket){
+                        this.selected_supermarket_name = supermarket.name;
+                    }
+                }
             }
         },
 
@@ -195,30 +205,11 @@
 
         async mounted(){
             this.username = await this.getUsername();
+            this.seletedSupermarketName();
         }
 
     }
 </script>
-
-<!-- <script>
-export default {
-    data:function(){
-        return {
-            datetime: '',
-            date_select: false
-        }
-    },
-    methods: {
-        /* fucntion to send data and get response from server */
-        booking(){
-            fetch('http://127.0.0.1:5000/booking',{
-                method: 'POST'
-            }
-            )
-        }
-    }
-}
-</script> -->
 
 <style scoped>
     
