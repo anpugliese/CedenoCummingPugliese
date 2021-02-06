@@ -2,12 +2,9 @@ import os
 import json
 import secrets
 import datetime
-<<<<<<< Updated upstream
-=======
 import string
 import re
 from datetime import timedelta
->>>>>>> Stashed changes
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
@@ -16,7 +13,7 @@ from werkzeug.security import safe_str_cmp
 from sqlalchemy import desc, and_
 from sqlalchemy.sql import func
 import numpy as np
-
+import requests
 #Authenticate function for JWT
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
@@ -63,7 +60,6 @@ def register():
         return {"error": "Error"}, 400
 
 #Populate database with supermarkets from supermarkets.json, only used once while developing 
-<<<<<<< Updated upstream
 # @cross_origin(origin='*')
 # @app.route('/supermarkets', methods=['GET'])
 # def supermarket():
@@ -81,36 +77,6 @@ def register():
 #     except Exception as ex:
 #         print(ex)
 #         return {"error": "Error"}, 400
-=======
-@cross_origin(origin='*')
-@app.route('/supermarkets', methods=['GET'])
-def supermarket():
-    try:
-        f = open("data/supermarkets.json")
-        supermarkets_dict = json.loads(f.read())
-        g = open("data/images.json")
-        images_dict = json.loads(g.read())
-        regex = re.compile('[^a-zA-Z]')
-        for supermarket in supermarkets_dict:
-            name = supermarket["name"]
-            aux=True
-            for imgs in images_dict:
-                if imgs["name"] in regex.sub('', name).lower()
-                    logo=imgs["url"]
-                    aux=False
-                    break
-            if aux:
-                logo="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Italian_traffic_signs_-_icona_supermercato.svg/1024px-Italian_traffic_signs_-_icona_supermercato.svg.png"
-            lat = supermarket["lat"]
-            lon = supermarket["lon"]
-            sp = Supermarket(name, lat, lon, logo)
-            db.session.add(sp) 
-            db.session.commit()
-        return {"message": "supermarket have been created."}, 201
-    except Exception as ex:
-        print(ex)
-        return {"error": "Error"}, 400
->>>>>>> Stashed changes
 
 #Retrieve all supermarkets (filter only in frontend)
 @cross_origin(origin='*')
@@ -156,10 +122,8 @@ def isAvailable(supermarket_id):
     people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
     supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
     if people_shopping<supermarket.max_capacity:
-        print('isavailable')
         return True
     else:
-        print('isNOTavailable')
         return False
 
 @cross_origin(origin='*')
@@ -172,9 +136,12 @@ def lineup():
         date_time = datetime.datetime.now()
         requests = Waiting.query.filter_by(username=username).count()
         requests += Shopping.query.filter_by(username=username).count()
+        people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
+        supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+        wait_time=int(people_waiting*averageTime(supermarket))+300
         if requests < 1:
-            lineup_token = username#secrets.token_hex(8)
-            waitingreq = Waiting(username, lineup_token, supermarket_id, date_time, date_time)
+            token = username#secrets.token_hex(8)
+            waitingreq = Waiting(username, token, supermarket_id, date_time, date_time, wait_time)
             db.session.add(waitingreq)
             db.session.commit()
             return {"message": "Line-up has been created."}, 201
@@ -184,32 +151,20 @@ def lineup():
         print(ex)
         return {"error": "Error"}, 400
 
-# @cross_origin(origin='*')
-# @app.route('/book', methods=['POST'])
-# def book():
-#     try:
-#         print(request.json)
-#         username = request.json.get('username')
-#         supermarket_id = request.json.get('supermarket_id')
-#         shop_time = request.json.get('book_time')
-#         date_time = datetime.datetime.now()
-#         requests = Waiting.query.filter_by(username=username).count()
-#         requests += Shopping.query.filter_by(username=username).count()
-#         if requests < 1:
-#             lineup_token = username#secrets.token_hex(8)
-#             waitingreq = Waiting(username, lineup_token, supermarket_id, date_time, shop_time)
-#             db.session.add(waitingreq)
-#             db.session.commit()
-#             return {"message": "Booking has been created."}, 201
-#         else:
-#             return {"error": "You already Have a Request."}, 400
-#     except Exception as ex:
-#         print(ex)
-#         return {"error": "Error"}, 400
 
-
-<<<<<<< Updated upstream
-=======
+#Booking function for selected supermarket
+@cross_origin(origin='*')
+@app.route('/booking', methods=['POST'])
+@jwt_required()
+def booking():
+    try:
+        print(request.json)
+        username = request.json.get('username')
+        supermarket_id = request.json.get('supermarket_id')
+        shop_time_raw = request.json.get('shop_time')
+        shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
+        date_time = datetime.datetime.now()
+        time_to_turn = (shop_time - date_time).seconds+300
         requests = Waiting.query.filter_by(username=username).count()
         requests += Shopping.query.filter_by(username=username).count()
         maxBookings = Waiting.query.filter_by(supermarket_id=supermarket_id, shop_time=shop_time).count()
@@ -218,8 +173,8 @@ def lineup():
         if maxBookings > 1:
             return {"message": "Booking Time is Full."}, 400
         if requests < 1:
-            token = secrets.token_hex(8)
-            waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time)
+            token = username#secrets.token_hex(8)
+            waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, time_to_turn)
             db.session.add(waitingreq)
             db.session.commit()
             return {"message": "Booking has been created."}, 201
@@ -228,7 +183,6 @@ def lineup():
     except Exception as ex:
         print(ex)
         return {"error": "Error"}, 400
->>>>>>> Stashed changes
 
 def isTurn(username,supermarket_id):
     dt_now = datetime.datetime.now()
@@ -242,12 +196,13 @@ def isTurn(username,supermarket_id):
 def updateWaitingTime(supermarket_id):
     supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
     if isAvailable(supermarket_id):
-        print('está disponible')
         supermarket.waiting_time = 0
     else:
         peopleShopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
         supermarket.waiting_time = averageTime(supermarket)*peopleShopping
     db.session.commit()
+
+
 
 @cross_origin(origin='*')
 @app.route('/getin', methods=['POST'])
@@ -261,13 +216,13 @@ def getin():
             supermarket_id = request.json.get('supermarket_id')
             date_time = datetime.datetime.now()
             if isTurn(username,supermarket_id):
-                updateWaitingTime(supermarket_id)
+                
                 db.session.delete(waitingUser)
                 db.session.commit()
                 shoppingreq = Shopping(username, token, supermarket_id, date_time)
                 db.session.add(shoppingreq)
                 db.session.commit()
-
+                updateWaitingTime(supermarket_id)
                 return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
             else:
                 return {"error": "It is not your turn."}, 400
@@ -287,7 +242,7 @@ def getout():
         if shoppingUser!=None:
             username=shoppingUser.username
             supermarket_id = request.json.get('supermarket_id')
-            updateWaitingTime(supermarket_id)
+            
             date_time = datetime.datetime.now()
             enter_time = shoppingUser.enter_time
             db.session.delete(shoppingUser)
@@ -295,7 +250,7 @@ def getout():
             record = Record(supermarket_id, (date_time-enter_time).seconds)
             db.session.add(record)
             db.session.commit()
-            
+            updateWaitingTime(supermarket_id)
             return {"message": "The door is opened. "+str(username)+" has leaved from ID: "+str(supermarket_id)}, 201
         else:
             return {"error": "User is not Shopping"}, 400 

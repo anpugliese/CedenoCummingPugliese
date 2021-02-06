@@ -110,6 +110,7 @@
     
     data: function () {
       return {
+        username: '',
         map_lat : 0,
         map_lng : 0,
         map_options: {
@@ -132,6 +133,12 @@
     },
     
     methods: {
+      ...mapActions({
+        getToken: "auth/getToken", 
+        getUsername: "auth/getUsername",
+        setSupermarketList: "supermarket/setSupermarketList",
+        setSelectedSupermarket: "supermarket/setSelectedSupermarket",
+      }),
       /* Get user's location */
       getLocation(){
         VueGeolocation.getLocation()
@@ -262,7 +269,30 @@
           supermarket.active = false;
         }
         this.applyFilter();
-      }
+      },
+
+      /* lineup function to send data and get a response from the server */
+      async lineup(sm_id){
+        let token = await this.getToken();
+        const data = { supermarket_id: sm_id, username: this.username }
+        fetch('http://127.0.0.1:5000/lineup', {
+        method: 'POST',
+        headers: {
+            'Authorization': 'JWT ' + token,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        })
+        .then(response => {
+          console.log(response);
+        })
+        .catch((error) => {
+        console.error('Error:', error);
+        });
+      },
+
+      
+
 
     },
 
@@ -276,7 +306,7 @@
       },
     },
 
-    mounted(){
+    async mounted(){
       /* Get users location */
       this.getLocation();
       this.icon = this.$L.icon({
@@ -286,7 +316,9 @@
       })
       /* load all supermarkets from the database */
       this.loadSupermarkets();
-      
+      this.$token = 'hola';
+      /* load username */
+      this.username = await this.getUsername();
     }
   }
 

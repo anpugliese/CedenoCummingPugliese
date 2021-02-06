@@ -15,13 +15,10 @@
             
             <label><h6 style="color: #4a0d70;">Date and Time:</h6></label>
             <br>
-<<<<<<< Updated upstream
             <v-row justify="center">
             <v-date-picker v-model="datepicker"></v-date-picker>
             </v-row>
-=======
->>>>>>> Stashed changes
-            <!-- <label><h6 style="color: #4a0d70;">Year:</h6></label>
+            <label><h6 style="color: #4a0d70;">Year:</h6></label>
             <select v-model="year" type="text">
                 <option>2021</option>
                 <option>2022</option>
@@ -103,15 +100,11 @@
                 <option>24</option>
             </select>
             <label><h6 style="color: #4a0d70;">Minute:</h6></label>
-<<<<<<< Updated upstream
-            <select v-model="hour" type = "selected">
-=======
             <select v-model="minute" type = "selected">
                 <option>00</option>
                 <option>30</option>                
->>>>>>> Stashed changes
                 <option v-for="index in 60" :key="index">{{index}}</option>
-            </select> -->
+            </select>
             <br>
             <!-- <input v-model="shop_time" type="text" placeholder="2021-03-01 16:00:00"> -->
             <label for="supermarket_id"><h6 style="color: #4a0d70;">Supermarket ID</h6></label>
