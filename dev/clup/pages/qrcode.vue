@@ -64,6 +64,9 @@ export default{
                             this.qr_code = data.qr_code;
                         })
                     
+                    }else if (response.status != 200) {
+                        this.qr_code = '';
+                        this.$router.push("/");
                     }
                 });
            
