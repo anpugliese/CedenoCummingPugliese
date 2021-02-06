@@ -158,6 +158,8 @@ def create_app(testing=False):
             print(request.json)
             username = request.json.get('username')
             supermarket_id = request.json.get('supermarket_id')
+            shop_time_raw = request.json.get('shop_time')
+            shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
             date_time = datetime.datetime.now()
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()
@@ -191,13 +193,53 @@ def create_app(testing=False):
             if requests < 1:
             # if maxBookings > 3:
             #     return {"message": "Booking Time is Full."}, 400
-                token = username#secrets.token_hex(8)
-                waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
+                token = secrets.token_hex(8)
+                waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time)
                 db.session.add(waitingreq)
                 db.session.commit()
                 return {"message": "Booking has been created."}, 201
             else:
                 return {"error": "You already have a booking."}, 401
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 400
+
+    @cross_origin(origin='*')
+    @app.route('/qrcode', methods=['POST'])
+    @jwt_required()
+    def qrcode():
+        try:
+            username = request.json.get('username')
+            count_waiting_token = Waiting.query.filter_by(username=username).count()
+            count_shopping_token = Shopping.query.filter_by(username=username).count()
+
+            if count_waiting_token == 1:
+                super_token = Waiting.query.filter_by(username=username).first()
+                super_token = super_token.token
+                return {"qr_code": super_token}
+            
+            elif count_shopping_token == 1:
+                super_token = Shopping.query.filter_by(username=username).first()
+                super_token = super_token.token
+                return {"qr_code": super_token}
+
+            else:
+                return {"message": "You don't have any ticket."}, 400
+
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 400
+    @cross_origin(origin='*')
+    @app.route('/remainingTime', methods=['POST'])
+    @jwt_required()
+    def remainingTime():
+        try:
+            username = request.json.get('username')
+            print(username)
+            waiting_time = Waiting.query.filter_by(username=username).first()
+            waiting_time = waiting_time.shop_time
+            return {"remain_time": str(waiting_time)}
+
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
