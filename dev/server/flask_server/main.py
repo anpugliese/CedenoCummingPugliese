@@ -175,7 +175,7 @@ def create_app(testing=False):
                 db.session.commit()
                 return {"message": "Line-up has been created."}, 201
             else:
-                return {"error": "You already Have a Request."}, 400
+                return {"error": "You already Have a Request."}, 401
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
@@ -197,7 +197,7 @@ def create_app(testing=False):
             requests += Shopping.query.filter_by(username=username).count()
             maxBookings = Waiting.query.filter_by(supermarket_id=supermarket_id, shop_time=shop_time).count()
             if maxBookings > 3:
-                return {"message": "Booking Time is Full."}, 400
+                return {"message": "Booking Time is Full."}, 402
             if requests < 1:
                 token = secrets.token_hex(8)
                 waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, time_to_turn)
@@ -205,7 +205,7 @@ def create_app(testing=False):
                 db.session.commit()
                 return {"message": "Booking has been created."}, 201
             else:
-                return {"error": "You already have a booking."}, 401
+                return {"error": "You already have a request."}, 401
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
