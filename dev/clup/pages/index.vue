@@ -10,7 +10,7 @@
       <h5 style="text-align: center; padding-top: 5px;">Filters</h5>
       <div class="slidecontainer">
         <input type="range" min="1" max="100" value="50" v-model="slider_value">
-        <h6>slider value {{slider_value}}</h6>
+        <h6>Waiting time less than {{slider_value}}</h6>
       </div>
       <div class="check" v-for="sp in supermarkets_names" :key="sp.id">
         <label :for="sp.id">
@@ -27,11 +27,16 @@
     
 
     <div class="round-button">
-      <fa-icon :icon="['fas', 'running']" class="round-button-icon"/>
+      <NuxtLink to="/list">
+        <fa-icon :icon="['fas', 'running']" class="round-button-icon"/>
+      </NuxtLink>
+            
     </div>
 
     <div class="round-button">
+      <NuxtLink to="/qrcode">
       <fa-icon :icon="['fas', 'qrcode']" class="round-button-icon"/>
+      </NuxtLink>
     </div>
   </div>
 
@@ -52,43 +57,55 @@
       <l-map :zoom=13 :center="[map_lat, map_lng]" :options="map_options">
         <l-tile-layer url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"></l-tile-layer>
         <l-marker :lat-lng="[map_lat, map_lng]" 
-          :icon="icon">
-          
+          :icon="icon">          
         </l-marker>
 
         <!-- Iterate to render nearby supermarkets markers -->
         <l-marker 
-          v-for="(supermarket,index) in new_supermarkets_list"
+          v-for="supermarket in new_supermarkets_list"
           :key="supermarket.id"
           :lat-lng="[supermarket.lat, supermarket.lon]" 
-          :icon="icon"
+          :icon="icon" 
         >
-          <l-popup>
-            <div style="text-align:center;">
-              
-              <button 
-              class="button-popup button1" 
-              v-on:click="lineup(index)"
-              type="submit"
-              >
-              Line Up</button>
-            </div> 
-          </l-popup>
           <l-icon
             :icon-anchor="staticAnchor"
             class-name="someExtraClass"
           >
           <!-- Filter according to waiting time (now just max capacity, waiting time has to be added) -->
+            <!-- <div class="supermarket-card" style="margin: 2px;"
+              bind:class="paintMarker(supermarket.waiting_time)"> -->
+            <!-- {{supermarket.waiting_time}} -->
             <div class="supermarket-card" style="margin: 2px;"
-              :class="{'red-marker': supermarket.max_capacity < 10, 'green-marker': supermarket.max_capacity < 30 && supermarket.max_capacity >= 10}"
+              :class="{'red-marker': supermarket.waiting_time >= 15, 'yellow-marker': supermarket.waiting_time < 15 && supermarket.waiting_time >= 5, 'green-marker': supermarket.waiting_time < 5}"
             >
               <div style="background-color: white;">
-                <img width="50" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Carrefour_logo.svg/1000px-Carrefour_logo.svg.png">
+                <img width="50" v-bind:src="supermarket.logo">
               </div>    
               <span class="waiting-time">{{supermarket.name}}</span>          
               <span class="waiting-time">{{supermarket.waiting_time}} MINS</span>
             </div>
           </l-icon>
+          <l-popup>
+            <div style="width: 150px; padding:0;">
+              <h6 class="popup-title">{{supermarket.name}}</h6>
+              <div class="container-fluid" style="width: 100%; padding:0;">
+                <div class="row">
+                  <div class="col-6" style="padding-left:5px; padding-right: 5px; width: 100%">
+                    <button class="btn btn-primary btn-sm w-100" v-on:click="lineup(supermarket.id)" type="submit">Line up</button>
+                  </div>
+                  <div class="col-6" style="padding-left:5px; padding-right: 5px; width: 100%">
+                    <button
+                     class="btn btn-primary btn-sm w-100" 
+                     type="submit" 
+                     @click="bookSupermarket(supermarket.id)"
+                    >
+                      Book
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </l-popup>
         </l-marker>
 
         <l-control-zoom position="bottomleft"  ></l-control-zoom>
@@ -100,7 +117,7 @@
 </template>
 
 <script>
-  
+  import {mapActions, mapGetters} from 'vuex';
   import VueGeolocation from 'vue-browser-geolocation';
   export default{
     components: {
@@ -108,9 +125,9 @@
     },
     
     
+    
     data: function () {
       return {
-        username: '',
         map_lat : 0,
         map_lng : 0,
         map_options: {
@@ -120,15 +137,11 @@
         customText: "Supermarket",
         staticAnchor: [16, 37],
         supermarkets_list : [],
-
         filterName : [],
         filterWaitingTime : null,
-
         filterIsActive : false,
-
         slider_value : 0,
         supermarkets_names: [],
-        supermarket_id: 0,
       }
     },
     
@@ -148,12 +161,20 @@
           console.log(coordinates);
         });
       },
-
+      async bookSupermarket(s_id){
+        console.log(s_id);
+        await this.setSelectedSupermarket(s_id);
+        await console.log(this.selected_supermarket);
+        this.$router.push("/booking");
+      },
       /* Bring the whole list of supermarkets from the database thru an endpoint */
-      loadSupermarkets(){
+      async loadSupermarkets(){
+        let token;
+        token = await this.getToken();
         fetch('http://127.0.0.1:5000/supermarkets_list', {
         method: 'GET',
         headers: {
+            'Authorization': 'JWT ' + token,
             'Content-Type': 'application/json',
         }
         })
@@ -169,23 +190,7 @@
         })
         .catch((error) => {
         console.error('Error:', error);
-        });
-      },
-      /* lineup function to send data and get a response from the server */ 
-      lineup(sm_id){
-        const data = { supermarket_id: sm_id, username: this.username };
-        fetch('http://127.0.0.1:5000/lineup', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        })
-        .then(response => {
-          console.log(response);
-        })
-        .catch((error) => {
-        console.error('Error:', error);
+        this.$router.push('/login')
         });
       },
       /* Distance between two points */
@@ -194,7 +199,7 @@
         return distance;
       },
       /* Takes the slider value and the checked supermarkets */
-      applyFilter(){
+      async applyFilter(){
         this.filterWaitingTime = this.slider_value;
         this.filterName = [];
         for(let i in this.supermarkets_names){
@@ -202,7 +207,6 @@
             this.filterName.push(this.supermarkets_names[i].name);
           }
         }
-        
       },
       /* Lists the filter names  */
       updateFilterNames(super_list){
@@ -221,7 +225,6 @@
           this.supermarkets_names = sp_list;
         }
       },
-
       filterList(){
         /* super_list of nearby supermarkets according to user's location */
         let super_list = []; 
@@ -254,14 +257,12 @@
             if(!name_exists){
               return false
             }
-
           }
           return true;
           
         });
         return super_list;
       },
-
       /* Clears filter and shows all nearby supermarkets */
       clearFilter(){
         for(let i in this.supermarkets_names){
@@ -270,11 +271,10 @@
         }
         this.applyFilter();
       },
-
       /* lineup function to send data and get a response from the server */
       async lineup(sm_id){
         let token = await this.getToken();
-        const data = { supermarket_id: sm_id, username: this.username }
+        const data = { supermarket_id: sm_id, username: this.username };
         fetch('http://127.0.0.1:5000/lineup', {
         method: 'POST',
         headers: {
@@ -290,22 +290,24 @@
         console.error('Error:', error);
         });
       },
-
       
-
-
+    
     },
-
     computed: {
+      ...mapGetters({ 
+        auth: "auth/getAuthState" , 
+        username1: "auth/getUsername",
+        selected_supermarket: "supermarket/getSelectedSupermarket",
+        stored_supermarkets_list: "supermarket/getSupermarketList"
+      }),
       /* Dynamic function to update the list of nearby supermarkets */
       new_supermarkets_list: function(){
         this.filterTrigger;
         let super_list = this.filterList();
-        let super_copy = super_list;
+        this.setSupermarketList(super_list);
         return super_list
       },
     },
-
     async mounted(){
       /* Get users location */
       this.getLocation();
@@ -317,12 +319,9 @@
       /* load all supermarkets from the database */
       this.loadSupermarkets();
       this.$token = 'hola';
-      /* load username */
       this.username = await this.getUsername();
     }
   }
-
-
 </script>
 
 <style>
@@ -336,7 +335,6 @@
   align-items: center;
   text-align: center;
 }
-
 .supermarket-card {
   width: 90px;
   padding: 5px;
@@ -347,22 +345,18 @@
   align-items: center;
   text-align: center;
 }
-
 .card:hover {
   box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
 }
-
 /* Add rounded corners to the top left and the top right corner of the image */
 img {
   border-radius: 10px 10px 0 0;
 }
-
 .waiting-time{
   padding: 10px;
   text-align: center;
   display: block;
 }
-
 .title {
   font-family: Roboto;
   display: block;
@@ -371,7 +365,6 @@ img {
   color: #35495e;
   letter-spacing: 1px;
 }
-
 .subtitle {
   font-weight: 300;
   font-size: 42px;
@@ -379,11 +372,9 @@ img {
   word-spacing: 5px;
   padding-bottom: 15px;
 }
-
 .links {
   padding-top: 15px;
 }
-
 .marker-pin {
   width: 30px;
   height: 30px;
@@ -405,7 +396,6 @@ img {
     position: absolute;
     border-radius: 50%;
  }
-
  /* to align icon */
 .custom-div-icon i {
    position: absolute;
@@ -421,7 +411,6 @@ img {
   position: relative;
   display: flex;
 }
-
 .searchTerm {
   width: 100%;
   border: 3px solid #adc1c4;
@@ -432,11 +421,9 @@ img {
   outline: none;
   color: #9DBFAF;
 }
-
 .searchTerm:focus{
   color: #adc1c4;
 }
-
 .searchButton {
   width: 40px;
   height: 36px;
@@ -448,7 +435,6 @@ img {
   cursor: pointer;
   font-size: 20px;
 }
-
 /*Resize the wrap to see the search bar change!*/
 .wrap{
   width: 100%;
@@ -459,7 +445,6 @@ img {
   transform: translate(-50%, -50%);
   z-index: 100000;
 }
-
 .button-bar{
   position: absolute;
   width: 90px;
@@ -468,7 +453,6 @@ img {
   right: 0;
   bottom: 0;
 }
-
 .round-button{
   width: 50px;
   height: 50px;
@@ -482,25 +466,21 @@ img {
   cursor: pointer;
   box-shadow: 3px 4px 5px #888888;
 }
-
 .round-button-icon{
   margin-top: 14px;
   font-size: 22px;
+  color: white;
 }
-
 /* for filter according to waiting time: red, green and yellow*/
 .red-marker{
   background-color: #c43939;
 }
-
 .green-marker{
-  background-color: #2bb660;
+  background-color: #27bd2e;
 }
-
 .yellow-marker{
   background-color: #c2bf1a;
 }
-
 .filter-popup{
   width: 190px;
   height: 250px;
@@ -515,16 +495,13 @@ img {
   overflow: scroll;
   box-shadow:3px 4px 5px #888888;
 }
-
 .slidecontainer {
   width: 100%; /* Width of the outside container */
   text-align: center;
 }
-
 .check{
   padding: 0px 10px;
 }
-
 button {
     background-color: #4a0d70;
     color: white;
@@ -535,24 +512,11 @@ button {
     cursor: pointer;
     width: 50%;
   }
-
 button:hover {
   opacity: 0.8;
 }
-
-.button-popup {
-  border: none;
-  color: white;
-  padding: 15px 32px;
+.popup-title{
+  font-weight: bold;
   text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  cursor: pointer;
 }
-
-.button1 {background-color: #4CAF50;} /* Green */
-.button2 {background-color: #008CBA;} /* Blue */
-
 </style>

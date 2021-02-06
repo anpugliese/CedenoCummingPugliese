@@ -119,7 +119,6 @@
 <script>
     // import Datetime from 'vue-datetime';
     import {mapActions, mapGetters} from 'vuex';
-    import VCalendar from 'v-calendar';
     export default{
             
         data: function () {
