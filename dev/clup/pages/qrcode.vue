@@ -34,7 +34,7 @@ export default{
             value:"token",
             width: '300',
             qr_code: 'loquesea',
-            waiting_time: '',
+            remain_time: '',
             loading: true,
             register_success: false
         }
@@ -42,7 +42,7 @@ export default{
     methods: {
     ...mapActions({
         getToken: "auth/getToken", 
-        getUsername: "auth/getUsername",
+        getUsername: "auth/getUsername"
     }),
 
       
@@ -112,6 +112,10 @@ export default{
         },
 
         async mounted(){
+
+            setInterval(() => {
+                this.remainingTime();
+            }, 5000);
             this.value = "hello";
             this.username = await this.getUsername();
             this.loading = true;
