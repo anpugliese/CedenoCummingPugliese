@@ -47,7 +47,7 @@ export FLASK_ENV=development
 export APP_SETTINGS=flask_server.config.Config
 flask run
 ```
-For changes in the database model:
+3 For changes in the database model:
 ```
 flask db migrate
 flask db upgrade

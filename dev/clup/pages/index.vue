@@ -33,7 +33,9 @@
     </div>
 
     <div class="round-button">
+      <NuxtLink to="/qrcode">
       <fa-icon :icon="['fas', 'qrcode']" class="round-button-icon"/>
+      </NuxtLink>
     </div>
   </div>
 
@@ -281,9 +283,7 @@
       /* lineup function to send data and get a response from the server */
       async lineup(sm_id){
         let token = await this.getToken();
-        let username = await this.username;
-        console.log(username);
-        const data = { supermarket_id: sm_id, username: username };
+        const data = { supermarket_id: sm_id, username: this.username };
         fetch('http://127.0.0.1:5000/lineup', {
         method: 'POST',
         headers: {
@@ -309,7 +309,7 @@
     computed: {
       ...mapGetters({ 
         auth: "auth/getAuthState" , 
-        username: "auth/getUsername",
+        username1: "auth/getUsername",
         selected_supermarket: "supermarket/getSelectedSupermarket",
         stored_supermarkets_list: "supermarket/getSupermarketList"
       }),
@@ -323,7 +323,7 @@
       },
     },
 
-    mounted(){
+    async mounted(){
       /* Get users location */
       this.getLocation();
       this.icon = this.$L.icon({
@@ -333,6 +333,7 @@
       })
       /* load all supermarkets from the database */
       this.loadSupermarkets();
+      this.username = await this.getUsername();
     }
   }
 
