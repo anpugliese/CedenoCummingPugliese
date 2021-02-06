@@ -10,6 +10,8 @@
             <div v-if="!loading">
                 <vue-qrcode :value="qr_code" :width="300"/>
             </div>
+            <h3 style="text-align:lefdt; padding-top:20px; padding-bottom:20px;">Your waiting time: {{remain_time}}</h3>
+
         </div>
         
     </div>
@@ -32,6 +34,7 @@ export default{
             value:"token",
             width: '300',
             qr_code: 'loquesea',
+            waiting_time: '',
             loading: true,
             register_success: false
         }
@@ -72,6 +75,30 @@ export default{
            
       },
 
+      async remainingTime(){
+          let token = await this.getToken();
+          await this.qrCode();
+          const data = { username: this.username}
+          fetch('http://127.0.0.1:5000/remainingTime', {
+          method: 'POST',
+          headers: {
+              'Authorization': 'JWT ' + token,
+              'Content-Type': 'application/json',
+          },
+            body: JSON.stringify(data),
+              })
+            .then(response => {                    
+                    console.log(response);
+                    if(response.status == 200){
+                        response.json().then(data => {
+                            console.log('Success:', data);
+                            this.remain_time = data.remain_time;
+                        })
+                    }
+                });
+
+      }
+
 
 }, 
 
@@ -90,6 +117,7 @@ export default{
             this.loading = true;
             await this.qrCode();
             this.loading = false;
+            await this.remainingTime();
         }
 
 }
