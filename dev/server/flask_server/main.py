@@ -10,10 +10,26 @@ from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
+<<<<<<< Updated upstream
+=======
+from flask_migrate import Migrate, MigrateCommand
+>>>>>>> Stashed changes
 from sqlalchemy import desc, and_
 from sqlalchemy.sql import func
 import numpy as np
 import requests
+<<<<<<< Updated upstream
+=======
+import time
+from flask_apscheduler import APScheduler
+#Authenticate fun
+db = SQLAlchemy()
+
+#This must be declared after declaring db
+from .models import *
+from .timetable import Timetable
+
+>>>>>>> Stashed changes
 #Authenticate function for JWT
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
@@ -33,6 +49,7 @@ db = SQLAlchemy(app)
 jwt = JWT(app, authenticate, identity) #JWT Json Web Token to manage sessions, by default managed in /auth (POST request)
 CORS(app)
 
+<<<<<<< Updated upstream
 #This must be declared after declaring db
 from models import User, Supermarket, Waiting, Shopping, Record
 from timetable import Timetable
@@ -41,6 +58,22 @@ from timetable import Timetable
 @jwt_required()
 def protected():
     return '%s' % current_identity
+=======
+    if testing:
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+        
+    
+    
+    
+
+    db.init_app(app)
+
+    
+    jwt = JWT(app, authenticate, identity) #JWT Json Web Token to manage sessions, by default managed in /auth (POST request)
+    CORS(app)
+>>>>>>> Stashed changes
 
 #Register function to save users in the database, usernames(or emails) are unique
 @cross_origin(origin='*')
@@ -59,6 +92,7 @@ def register():
         print(ex)
         return {"error": "Error"}, 400
 
+<<<<<<< Updated upstream
 #Populate database with supermarkets from supermarkets.json, only used once while developing 
 # @cross_origin(origin='*')
 # @app.route('/supermarkets', methods=['GET'])
@@ -77,6 +111,31 @@ def register():
 #     except Exception as ex:
 #         print(ex)
 #         return {"error": "Error"}, 400
+=======
+    # initialize scheduler
+    scheduler = APScheduler()
+    # if you don't wanna use a config, you can set options here:
+    # scheduler.api_enabled = True
+    scheduler.init_app(app)
+    scheduler.start()
+
+    #Register function to save users in the database, usernames(or emails) are unique
+    @cross_origin(origin='*')
+    @app.route('/register', methods=['POST'])
+    def register():
+        try:
+            print(request.json)    
+            username = request.json.get('username')
+            password = request.json.get('password')
+            print(username, password)
+            user = User(username, password)
+            db.session.add(user) 
+            db.session.commit()
+            return {"message": f"user {user.username} has been created."}, 201
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 400
+>>>>>>> Stashed changes
 
 #Retrieve all supermarkets (filter only in frontend)
 @cross_origin(origin='*')
@@ -151,6 +210,7 @@ def lineup():
         print(ex)
         return {"error": "Error"}, 400
 
+<<<<<<< Updated upstream
 
 #Booking function for selected supermarket
 @cross_origin(origin='*')
@@ -183,6 +243,92 @@ def booking():
     except Exception as ex:
         print(ex)
         return {"error": "Error"}, 400
+=======
+    @cross_origin(origin='*')
+    @app.route('/lineup', methods=['POST'])
+    @jwt_required()
+    def lineup():
+        try:
+            print(request.json)
+            username = request.json.get('username')
+            supermarket_id = request.json.get('supermarket_id')
+            date_time = datetime.datetime.now()
+            requests = Waiting.query.filter_by(username=username).count()
+            requests += Shopping.query.filter_by(username=username).count() # total number of requests
+            people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count() # total number of users shopping
+            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count() # total number of users waiting
+            supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+            
+            if people_waiting==0 and people_shopping==supermarket.max_capacity:
+                wait_time=int(averageTime(supermarket))
+            else:
+                wait_time=int(people_waiting*averageTime(supermarket))
+            shop_time=date_time+datetime.timedelta(seconds=wait_time)
+            if requests < 1:
+                token = username#secrets.token_hex(8)
+                waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, wait_time,0)
+                db.session.add(waitingreq)
+                db.session.commit()
+                return {"message": "Line-up has been created."}, 201
+            else:
+                return {"error": "You already Have a Request."}, 401
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 400
+
+    #Booking function for selected supermarket
+    @cross_origin(origin='*')
+    @app.route('/booking', methods=['POST'])
+    @jwt_required()
+    def booking():
+        try:
+            print(request.json)
+            username = request.json.get('username')
+            supermarket_id = request.json.get('supermarket_id')
+            shop_time_raw = request.json.get('shop_time')
+            shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
+            date_time = datetime.datetime.now()
+            time_to_turn = (shop_time - date_time).seconds
+            requests = Waiting.query.filter_by(username=username).count()
+            requests += Shopping.query.filter_by(username=username).count()
+            maxBookings = Waiting.query.filter_by(supermarket_id=supermarket_id, shop_time=shop_time).count()
+            supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+            if maxBookings > supermarket.max_capacity:
+                return {"message": "Booking Time is Full."}, 402
+            if shop_time < date_time+datetime.timedelta(minutes=60) or shop_time > date_time+datetime.timedelta(days=7):
+                return {"message": "Invalid Booking Time."}, 403
+            if requests < 1:
+                token = username#secrets.token_hex(8)
+                waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, time_to_turn,1)
+                db.session.add(waitingreq)
+                db.session.commit()
+                return {"message": "Booking has been created."}, 201
+            else:
+                return {"error": "You already have a request."}, 401
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 400
+    
+    # this returns true if the user has the oldest request on a specific supermarket
+    def isTurn(username,supermarket_id):
+        dt_now = datetime.datetime.now()
+        userWithTurn=db.session.query(Waiting).filter(
+            and_(Waiting.supermarket_id == supermarket_id,Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5))).order_by(
+                Waiting.req_time).first()
+        if userWithTurn!=None and userWithTurn.username==username and isAvailable(supermarket_id):
+            return True
+        else:
+            return False
+    # this updates the waiting time in minutes each time an user enters or leaves the supermarket
+    def updateWaitingTime(supermarket_id):
+        supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+        if isAvailable(supermarket_id):
+            supermarket.waiting_time = 0
+        else:
+            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
+            supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
+        db.session.commit()
+>>>>>>> Stashed changes
 
 def isTurn(username,supermarket_id):
     dt_now = datetime.datetime.now()
@@ -232,6 +378,7 @@ def getin():
         print(ex)
         return {"error": "Error"}, 400
 
+<<<<<<< Updated upstream
 @cross_origin(origin='*')
 @app.route('/getout', methods=['POST'])
 def getout():
@@ -246,6 +393,48 @@ def getout():
             date_time = datetime.datetime.now()
             enter_time = shoppingUser.enter_time
             db.session.delete(shoppingUser)
+=======
+    #this function runs every one minute to update waiting time associated to the requests
+    # also it removes from waiting table the expired requests
+    @scheduler.task('interval', id='do_job_1', seconds=20)
+    def control_waiting_time():
+        app.app_context().push()
+        dt_now = datetime.datetime.now()
+
+        # delete expired requests
+        expired_req=db.session.query(Waiting).filter(Waiting.shop_time < dt_now-datetime.timedelta(minutes=5))
+        expired_req.delete()
+        db.session.commit()
+        
+        ## loop on the supermarkets that are present in the waiting table
+        for req in db.session.query(Waiting.supermarket_id).distinct(): 
+            userWithTurn=db.session.query(Waiting).filter( #get the queue of the supermarket
+                and_(Waiting.supermarket_id == req[0],Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5),Waiting.type_id==0)).order_by(
+                    Waiting.req_time)
+            if not isAvailable(req[0]): #if the supermarket is full
+                supermarket=Supermarket.query.filter_by(id=req[0]).first()
+                counter=1
+                avg_time=averageTime(supermarket)
+                for user in userWithTurn:# update the wait time of the users that are in the queue
+                    user.wait_time=int(counter*avg_time)
+                    user.shop_time=dt_now+datetime.timedelta(seconds=user.wait_time)
+                    db.session.commit()
+                    counter+=1
+            
+        
+
+        print("Waiting Time Control: "+time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
+
+    
+
+
+    # the following are just auxiliary functions for developing (NEED TO BE DELETED AT SOME POINT)
+    @cross_origin(origin='*')
+    @app.route('/deleteall_w', methods=['POST'])
+    def deleteall_w():
+        try:
+            Waiting.query.delete()
+>>>>>>> Stashed changes
             db.session.commit()
             record = Record(supermarket_id, (date_time-enter_time).seconds)
             db.session.add(record)
@@ -259,6 +448,7 @@ def getout():
         return {"error": "Error"}, 400
 
 
+<<<<<<< Updated upstream
 @cross_origin(origin='*')
 @app.route('/deleteall_w', methods=['POST'])
 def deleteall_w():
@@ -293,3 +483,13 @@ def deleteall():
     except Exception as ex:
         print(ex)
         return {"error": "Error"}, 400
+=======
+
+
+
+    return app
+
+
+
+app = create_app()
+>>>>>>> Stashed changes

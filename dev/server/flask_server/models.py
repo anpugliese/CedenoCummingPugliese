@@ -47,6 +47,7 @@ class Supermarket(db.Model):
     def __repr__(self):
         return '<id {}>'.format(self.id)
 
+<<<<<<< Updated upstream
 class Section(db.Model):
     __tablename__ = 'Section'
 
@@ -80,6 +81,8 @@ class Section(db.Model):
 
 #     def __repr__(self):
 #         return '<id {}>'.format(self.id)
+=======
+>>>>>>> Stashed changes
 
 class Shopping(db.Model):
     __tablename__ = 'Shopping'
@@ -110,14 +113,16 @@ class Waiting(db.Model):
     req_time = db.Column(db.DateTime, nullable=False)
     shop_time = db.Column(db.DateTime, nullable=False)
     wait_time = db.Column(db.Integer, nullable=False)
+    type_id = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, username, token, supermarket_id, req_time, shop_time, wait_time):
+    def __init__(self, username, token, supermarket_id, req_time, shop_time, wait_time, type_id):
         self.username = username
         self.token = token
         self.supermarket_id = supermarket_id
         self.req_time = req_time
         self.shop_time = shop_time
         self.wait_time = wait_time
+        self.type_id = type_id
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
