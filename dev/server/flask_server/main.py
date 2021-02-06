@@ -11,6 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
 from flask_migrate import Migrate, MigrateCommand
+from sqlalchemy import and_
 
 db = SQLAlchemy()
 
@@ -168,7 +169,7 @@ def create_app(testing=False):
                 db.session.commit()
                 return {"message": "Line-up has been created."}, 201
             else:
-                return {"error": "You already Have a Request."}, 400
+                return {"error": "You already Have a Request."}, 401
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
@@ -243,12 +244,12 @@ def create_app(testing=False):
 
                     return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
                 else:
-                    return {"error": "It is not your turn."}, 400
+                    return {"error": "It is not your turn."}, 401
             else:
-                return {"error": "Wrong token"}, 400
+                return {"error": "Wrong token"}, 402
         except Exception as ex:
             print(ex)
-            return {"error": "Error"}, 400
+            return {"error": "Error"}, 500
 
     @cross_origin(origin='*')
     @app.route('/getout', methods=['POST'])

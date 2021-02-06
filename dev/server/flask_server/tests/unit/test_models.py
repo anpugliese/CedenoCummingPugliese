@@ -10,7 +10,7 @@ def test_new_user(new_user):
     """
     GIVEN a User model
     WHEN a new User is created
-    THEN check the email, hashed_password, authenticated, and role fields are defined correctly
+    THEN check that the username and password are defined correctly
     """
     assert new_user.username == 'test_user'
     assert new_user.password == 'IWantToLineUp'
