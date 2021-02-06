@@ -29,8 +29,7 @@
     <div class="round-button">
       <NuxtLink to="/list">
         <fa-icon :icon="['fas', 'running']" class="round-button-icon"/>
-      </NuxtLink>
-            
+      </NuxtLink>            
     </div>
 
     <div class="round-button">
@@ -74,7 +73,7 @@
               bind:class="paintMarker(supermarket.waiting_time)"> -->
             <!-- {{supermarket.waiting_time}} -->
             <div class="supermarket-card" style="margin: 2px;"
-              :class="{'red-marker': supermarket.waiting_time >= 300, 'yellow-marker': supermarket.waiting_time < 300 && supermarket.waiting_time >= 60, 'green-marker': supermarket.waiting_time < 60}"
+              :class="{'red-marker': supermarket.waiting_time >= 15, 'yellow-marker': supermarket.waiting_time < 15 && supermarket.waiting_time >= 5, 'green-marker': supermarket.waiting_time < 5}"
             >
               <div style="background-color: white;">
                 <img width="50" v-bind:src="supermarket.logo">
@@ -149,6 +148,7 @@
     methods: {
       ...mapActions({
         getToken: "auth/getToken", 
+        getUsername: "auth/getUsername",
         setSupermarketList: "supermarket/setSupermarketList",
         setSelectedSupermarket: "supermarket/setSelectedSupermarket",
       }),
@@ -333,7 +333,6 @@
       })
       /* load all supermarkets from the database */
       this.loadSupermarkets();
-      this.$token = 'hola';
     }
   }
 
