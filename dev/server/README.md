@@ -47,19 +47,12 @@ export FLASK_ENV=development
 export APP_SETTINGS=flask_server.config.Config
 flask run
 ```
-3.a For changes in the database model:
+3 For changes in the database model:
 ```
 flask db migrate
 flask db upgrade
 #Only when there are problems upgrading the db and repeat the two first steps
 flask db stamp head
-```
-3.b In case the previous lines do not work:
-```
-python manage.py db migrate
-python manage.py db upgrade
-#Only when there are problems upgrading the db and repeat the two first steps
-python manage.py db stamp head
 ```
 
 To run the whole project locally, it is necessary to have a local postgres database and possibly changing config.py line 10:
