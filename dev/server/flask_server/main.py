@@ -161,9 +161,16 @@ def create_app(testing=False):
             date_time = datetime.datetime.now()
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()
+            people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
+            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
+            supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+            if people_waiting==0 and people_shopping==supermarket.max_capacity:
+                wait_time=int(averageTime(supermarket))
+            else:
+                wait_time=int(people_waiting*averageTime(supermarket))
             if requests < 1:
-                token = username#secrets.token_hex(8)
-                waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
+                token = secrets.token_hex(8)
+                waitingreq = Waiting(username, token, supermarket_id, date_time, date_time, wait_time)
                 db.session.add(waitingreq)
                 db.session.commit()
                 return {"message": "Line-up has been created."}, 201
@@ -185,14 +192,15 @@ def create_app(testing=False):
             shop_time_raw = request.json.get('shop_time')
             shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
             date_time = datetime.datetime.now()
-
+            time_to_turn = (shop_time - date_time).seconds
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()
+            maxBookings = Waiting.query.filter_by(supermarket_id=supermarket_id, shop_time=shop_time).count()
+            if maxBookings > 3:
+                return {"message": "Booking Time is Full."}, 400
             if requests < 1:
-            # if maxBookings > 3:
-            #     return {"message": "Booking Time is Full."}, 400
-                token = username#secrets.token_hex(8)
-                waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
+                token = secrets.token_hex(8)
+                waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, time_to_turn)
                 db.session.add(waitingreq)
                 db.session.commit()
                 return {"message": "Booking has been created."}, 201
@@ -214,11 +222,10 @@ def create_app(testing=False):
     def updateWaitingTime(supermarket_id):
         supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
         if isAvailable(supermarket_id):
-            print('está disponible')
             supermarket.waiting_time = 0
         else:
             peopleShopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
-            supermarket.waiting_time = averageTime(supermarket)*peopleShopping
+            supermarket.waiting_time = int(averageTime(supermarket)*peopleShopping/60)
         db.session.commit()
 
     @cross_origin(origin='*')
