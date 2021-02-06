@@ -76,7 +76,7 @@
               bind:class="paintMarker(supermarket.waiting_time)"> -->
             <!-- {{supermarket.waiting_time}} -->
             <div class="supermarket-card" style="margin: 2px;"
-              :class="{'red-marker': supermarket.waiting_time >= 300, 'yellow-marker': supermarket.waiting_time < 300 && supermarket.waiting_time >= 60, 'green-marker': supermarket.waiting_time < 60}"
+              :class="{'red-marker': supermarket.waiting_time >= 15, 'yellow-marker': supermarket.waiting_time < 15 && supermarket.waiting_time >= 5, 'green-marker': supermarket.waiting_time < 5}"
             >
               <div style="background-color: white;">
                 <img width="50" v-bind:src="supermarket.logo">
@@ -151,6 +151,7 @@
     methods: {
       ...mapActions({
         getToken: "auth/getToken", 
+        getUsername: "auth/getUsername",
         setSupermarketList: "supermarket/setSupermarketList",
         setSelectedSupermarket: "supermarket/setSelectedSupermarket",
       }),
@@ -283,9 +284,7 @@
       /* lineup function to send data and get a response from the server */
       async lineup(sm_id){
         let token = await this.getToken();
-        let username = await this.username;
-        console.log(username);
-        const data = { supermarket_id: sm_id, username: username };
+        const data = { supermarket_id: sm_id, username: this.username };
         fetch('http://127.0.0.1:5000/lineup', {
         method: 'POST',
         headers: {
@@ -311,7 +310,7 @@
     computed: {
       ...mapGetters({ 
         auth: "auth/getAuthState" , 
-        username: "auth/getUsername",
+        username1: "auth/getUsername",
         selected_supermarket: "supermarket/getSelectedSupermarket",
         stored_supermarkets_list: "supermarket/getSupermarketList"
       }),
@@ -325,7 +324,7 @@
       },
     },
 
-    mounted(){
+    async mounted(){
       /* Get users location */
       this.getLocation();
       this.icon = this.$L.icon({
@@ -336,6 +335,8 @@
       /* load all supermarkets from the database */
       this.loadSupermarkets();
       this.$token = 'hola';
+
+      this.username = await this.getUsername();
     }
   }
 

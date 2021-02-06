@@ -37,7 +37,7 @@ class Supermarket(db.Model):
         self.logo = logo
         self.lat = lat
         self.lon = lon
-        self.max_capacity = 1
+        self.max_capacity = 2
         self.timetable = Timetable().toJson()
         self.waiting_time = 0
         self.mean_shopping_time = 10 
@@ -109,13 +109,15 @@ class Waiting(db.Model):
     supermarket_id = db.Column(db.Integer, nullable=False)
     req_time = db.Column(db.DateTime, nullable=False)
     shop_time = db.Column(db.DateTime, nullable=False)
+    wait_time = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, username, token, supermarket_id, req_time, shop_time):
+    def __init__(self, username, token, supermarket_id, req_time, shop_time, wait_time):
         self.username = username
         self.token = token
         self.supermarket_id = supermarket_id
         self.req_time = req_time
         self.shop_time = shop_time
+        self.wait_time = wait_time
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

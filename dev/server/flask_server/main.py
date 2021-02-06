@@ -39,9 +39,9 @@ def create_app(testing=False):
     app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=24) #Session time
 
     if testing:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
 
     db.init_app(app)
 
@@ -127,7 +127,7 @@ def create_app(testing=False):
             print(ex)
             return {"error": "Error"}, 400
 
-
+    # it computes the average shopping time in seconds in case there are records, otherwise it just returns the default value in the DB
     def averageTime(supermarket):
         delta_times = []
         records = Record.query.filter_by(supermarket_id=supermarket.id).all()
@@ -140,14 +140,13 @@ def create_app(testing=False):
         else:
             return supermarket.mean_shopping_time*60
 
+    # it checks whether a supermarket is available or not
     def isAvailable(supermarket_id):
         people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
         supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
         if people_shopping<supermarket.max_capacity:
-            print('isavailable')
             return True
         else:
-            print('isNOTavailable')
             return False
 
     @cross_origin(origin='*')
@@ -163,14 +162,21 @@ def create_app(testing=False):
             date_time = datetime.datetime.now()
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()
+            people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
+            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
+            supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+            if people_waiting==0 and people_shopping==supermarket.max_capacity:
+                wait_time=int(averageTime(supermarket))
+            else:
+                wait_time=int(people_waiting*averageTime(supermarket))
             if requests < 1:
-                token = username#secrets.token_hex(8)
-                waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
+                token = secrets.token_hex(8)
+                waitingreq = Waiting(username, token, supermarket_id, date_time, date_time, wait_time)
                 db.session.add(waitingreq)
                 db.session.commit()
                 return {"message": "Line-up has been created."}, 201
             else:
-                return {"error": "You already Have a Request."}, 400
+                return {"error": "You already Have a Request."}, 401
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
@@ -187,9 +193,14 @@ def create_app(testing=False):
             shop_time_raw = request.json.get('shop_time')
             shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
             date_time = datetime.datetime.now()
-
+            time_to_turn = (shop_time - date_time).seconds
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()
+            maxBookings = Waiting.query.filter_by(supermarket_id=supermarket_id, shop_time=shop_time).count()
+            if maxBookings > 2:
+                return {"message": "Booking Time is Full."}, 402
+            if shop_time < date_time+datetime.timedelta(minutes=1) or shop_time > date_time+datetime.timedelta(days=7):
+                return {"message": "Invalid Booking Time."}, 403
             if requests < 1:
             # if maxBookings > 3:
             #     return {"message": "Booking Time is Full."}, 400
@@ -199,7 +210,7 @@ def create_app(testing=False):
                 db.session.commit()
                 return {"message": "Booking has been created."}, 201
             else:
-                return {"error": "You already have a booking."}, 401
+                return {"error": "You already have a request."}, 401
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
@@ -244,6 +255,8 @@ def create_app(testing=False):
             print(ex)
             return {"error": "Error"}, 400
 
+    
+    # this returns true if the user has the oldest request on a specific supermarket
     def isTurn(username,supermarket_id):
         dt_now = datetime.datetime.now()
         userWithTurn=db.session.query(Waiting).filter(
@@ -253,19 +266,19 @@ def create_app(testing=False):
             return True
         else:
             return False
+    # this updates the waiting time in minutes each time an user enters or leaves the supermarket
     def updateWaitingTime(supermarket_id):
         supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
         if isAvailable(supermarket_id):
-            print('está disponible')
             supermarket.waiting_time = 0
         else:
             peopleShopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
-            supermarket.waiting_time = averageTime(supermarket)*peopleShopping
+            supermarket.waiting_time = int(averageTime(supermarket)*peopleShopping/60)
         db.session.commit()
 
+    # given token and supermarket, the function removes it from Waiting and insert it on Shopping
     @cross_origin(origin='*')
     @app.route('/getin', methods=['POST'])
-    @jwt_required()
     def getin():
         try:
             print(request.json)
@@ -285,16 +298,15 @@ def create_app(testing=False):
 
                     return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
                 else:
-                    return {"error": "It is not your turn."}, 400
+                    return {"error": "It is not your turn."}, 401
             else:
                 return {"error": "Wrong token"}, 400
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
-
+    # given a token and supermarket, this removes it from Shopping and insert a Record of total shop time in seconds
     @cross_origin(origin='*')
     @app.route('/getout', methods=['POST'])
-    @jwt_required()
     def getout():
         try:
             print(request.json)
@@ -314,15 +326,14 @@ def create_app(testing=False):
                 
                 return {"message": "The door is opened. "+str(username)+" has leaved from ID: "+str(supermarket_id)}, 201
             else:
-                return {"error": "User is not Shopping"}, 400 
+                return {"error": "User is not Shopping"}, 401
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
 
-
+    # the following are just auxiliary functions for developing (NEED TO BE DELETED AT SOME POINT)
     @cross_origin(origin='*')
     @app.route('/deleteall_w', methods=['POST'])
-    @jwt_required()
     def deleteall_w():
         try:
             Waiting.query.delete()
@@ -334,7 +345,6 @@ def create_app(testing=False):
 
     @cross_origin(origin='*')
     @app.route('/deleteall_s', methods=['POST'])
-    @jwt_required()
     def deleteall_s():
         try:
             Shopping.query.delete()
@@ -346,7 +356,6 @@ def create_app(testing=False):
 
     @cross_origin(origin='*')
     @app.route('/deleteall', methods=['POST'])
-    @jwt_required()
     def deleteall():
         try:
             Waiting.query.delete()
