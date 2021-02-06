@@ -127,7 +127,7 @@ def create_app(testing=False):
             print(ex)
             return {"error": "Error"}, 400
 
-
+    # it computes the average shopping time in seconds in case there are records, otherwise it just returns the default value in the DB
     def averageTime(supermarket):
         delta_times = []
         records = Record.query.filter_by(supermarket_id=supermarket.id).all()
@@ -140,14 +140,13 @@ def create_app(testing=False):
         else:
             return supermarket.mean_shopping_time*60
 
+    # it checks whether a supermarket is available or not
     def isAvailable(supermarket_id):
         people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
         supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
         if people_shopping<supermarket.max_capacity:
-            print('isavailable')
             return True
         else:
-            print('isNOTavailable')
             return False
 
     @cross_origin(origin='*')
@@ -209,7 +208,8 @@ def create_app(testing=False):
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
-
+    
+    # this returns true if the user has the oldest request on a specific supermarket
     def isTurn(username,supermarket_id):
         dt_now = datetime.datetime.now()
         userWithTurn=db.session.query(Waiting).filter(
@@ -219,6 +219,7 @@ def create_app(testing=False):
             return True
         else:
             return False
+    # this updates the waiting time in minutes each time an user enters or leaves the supermarket
     def updateWaitingTime(supermarket_id):
         supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
         if isAvailable(supermarket_id):
@@ -228,6 +229,7 @@ def create_app(testing=False):
             supermarket.waiting_time = int(averageTime(supermarket)*peopleShopping/60)
         db.session.commit()
 
+    # given token and supermarket, the function removes it from Waiting and insert it on Shopping
     @cross_origin(origin='*')
     @app.route('/getin', methods=['POST'])
     def getin():
@@ -255,7 +257,7 @@ def create_app(testing=False):
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
-
+    # given a token and supermarket, this removes it from Shopping and insert a Record of total shop time in seconds
     @cross_origin(origin='*')
     @app.route('/getout', methods=['POST'])
     def getout():
@@ -282,7 +284,7 @@ def create_app(testing=False):
             print(ex)
             return {"error": "Error"}, 400
 
-
+    # the following are just auxiliary functions for developing (NEED TO BE DELETED AT SOME POINT)
     @cross_origin(origin='*')
     @app.route('/deleteall_w', methods=['POST'])
     def deleteall_w():
