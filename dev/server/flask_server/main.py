@@ -39,9 +39,9 @@ def create_app(testing=False):
     app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=24) #Session time
 
     if testing:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
 
     db.init_app(app)
 
@@ -223,7 +223,6 @@ def create_app(testing=False):
 
     @cross_origin(origin='*')
     @app.route('/getin', methods=['POST'])
-    @jwt_required()
     def getin():
         try:
             print(request.json)
@@ -252,7 +251,6 @@ def create_app(testing=False):
 
     @cross_origin(origin='*')
     @app.route('/getout', methods=['POST'])
-    @jwt_required()
     def getout():
         try:
             print(request.json)
@@ -280,7 +278,6 @@ def create_app(testing=False):
 
     @cross_origin(origin='*')
     @app.route('/deleteall_w', methods=['POST'])
-    @jwt_required()
     def deleteall_w():
         try:
             Waiting.query.delete()
@@ -292,7 +289,6 @@ def create_app(testing=False):
 
     @cross_origin(origin='*')
     @app.route('/deleteall_s', methods=['POST'])
-    @jwt_required()
     def deleteall_s():
         try:
             Shopping.query.delete()
@@ -304,7 +300,6 @@ def create_app(testing=False):
 
     @cross_origin(origin='*')
     @app.route('/deleteall', methods=['POST'])
-    @jwt_required()
     def deleteall():
         try:
             Waiting.query.delete()
