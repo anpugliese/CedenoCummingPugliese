@@ -39,9 +39,9 @@ def create_app(testing=False):
     app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=24) #Session time
 
     if testing:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
 
     db.init_app(app)
 
@@ -158,6 +158,8 @@ def create_app(testing=False):
             print(request.json)
             username = request.json.get('username')
             supermarket_id = request.json.get('supermarket_id')
+            shop_time_raw = request.json.get('shop_time')
+            shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
             date_time = datetime.datetime.now()
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()
