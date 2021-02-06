@@ -191,7 +191,7 @@ def create_app(testing=False):
             if requests < 1:
             # if maxBookings > 3:
             #     return {"message": "Booking Time is Full."}, 400
-                token = username#secrets.token_hex(8)
+                token = secrets.token_hex(8)
                 waitingreq = Waiting(username, token, supermarket_id, date_time, date_time)
                 db.session.add(waitingreq)
                 db.session.commit()
