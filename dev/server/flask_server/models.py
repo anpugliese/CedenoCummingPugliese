@@ -40,7 +40,7 @@ class Supermarket(db.Model):
         self.max_capacity = 2
         self.timetable = Timetable().toJson()
         self.waiting_time = 0
-        self.mean_shopping_time = 10 
+        self.mean_shopping_time = 5 
 
 
 

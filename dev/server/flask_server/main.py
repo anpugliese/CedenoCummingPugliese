@@ -285,22 +285,32 @@ def create_app(testing=False):
     # this returns true if the user has the oldest request on a specific supermarket
     def isTurn(username,supermarket_id):
         dt_now = datetime.datetime.now()
-        userWithTurn=db.session.query(Waiting).filter(
-            and_(Waiting.supermarket_id == supermarket_id,Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5))).order_by(
+        userWithTurn=db.session.query(Waiting).filter(Waiting.supermarket_id == supermarket_id).order_by(
                 Waiting.req_time).first()
         if userWithTurn!=None and userWithTurn.username==username and isAvailable(supermarket_id):
             return True
         else:
             return False
-    # this updates the waiting time in minutes each time an user enters or leaves the supermarket
+    # this updates the waiting times each time an user enters or leaves the supermarket
     def updateWaitingTime(supermarket_id):
         supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
-        if isAvailable(supermarket_id):
+        userWithTurn=db.session.query(Waiting).filter(Waiting.supermarket_id == supermarket_id).order_by(
+                    Waiting.req_time).first()
+        if isAvailable(supermarket_id) and userWithTurn==None:
             supermarket.waiting_time = 0
+            db.session.commit()
+        elif isAvailable(supermarket_id) and userWithTurn!=None:
+            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
+            supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
+            db.session.commit()
+            dt_now=datetime.datetime.now()
+            userWithTurn.wait_time = 0
+            userWithTurn.shop_time=dt_now
+            db.session.commit()
         else:
             people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
             supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
-        db.session.commit()
+            db.session.commit()
 
     # given token and supermarket, the function removes it from Waiting and insert it on Shopping
     @cross_origin(origin='*')
@@ -326,6 +336,7 @@ def create_app(testing=False):
                     shoppingreq = Shopping(username, token, supermarket_id, date_time)
                     db.session.add(shoppingreq)
                     db.session.commit()
+
 
                     return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
                 else:
@@ -381,6 +392,7 @@ def create_app(testing=False):
         
         ## loop on the supermarkets that are present in the waiting table
         for req in db.session.query(Waiting.supermarket_id).distinct(): 
+            updateWaitingTime(req[0])
             userWithTurn=db.session.query(Waiting).filter( #get the queue of the supermarket
                 and_(Waiting.supermarket_id == req[0],Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5),Waiting.type_id==0)).order_by(
                     Waiting.req_time)
