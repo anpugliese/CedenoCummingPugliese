@@ -40,7 +40,7 @@ class Supermarket(db.Model):
         self.max_capacity = 2
         self.timetable = Timetable().toJson()
         self.waiting_time = 0
-        self.mean_shopping_time = 10 
+        self.mean_shopping_time = 5 
 
 
 
@@ -78,6 +78,8 @@ class Waiting(db.Model):
     shop_time = db.Column(db.DateTime, nullable=False)
     wait_time = db.Column(db.Integer, nullable=True)
     type_id = db.Column(db.Integer, nullable=True)
+    enter_time = db.Column(db.Integer, nullable=True)
+
 
 
     def __init__(self, username, token, supermarket_id, req_time, shop_time, wait_time, type_id):
@@ -88,6 +90,7 @@ class Waiting(db.Model):
         self.shop_time = shop_time
         self.wait_time = wait_time
         self.type_id = type_id
+        self.enter_time = 300
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

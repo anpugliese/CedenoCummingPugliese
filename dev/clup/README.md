@@ -9,6 +9,7 @@ $ npm install
 # install qr-code library
 $ npm install -g vue-qrcode
 $ npm install --save vue-qrcode
+$ npm install --save qrcode
 
 # serve with hot reload at localhost:3000
 $ npm run dev
