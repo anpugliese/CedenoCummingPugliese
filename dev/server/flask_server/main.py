@@ -260,7 +260,74 @@ def create_app(testing=False):
                 return {"error": "You already have a request."}, 401
         except Exception as ex:
             print(ex)
+<<<<<<< Updated upstream
             return {"error": "Error"}, 400
+=======
+            return {"error": "Error"}, 500
+    
+    #this function receives the token and cancel the request associated to it
+    @cross_origin(origin='*')
+    @app.route('/cancel', methods=['POST'])
+    @jwt_required()
+    def cancel(): 
+        try:
+            print(request.json)
+            token = request.json.get('token')
+            # fetch token from Waiting table
+            waitingUser = Waiting.query.filter_by(token=token).first()
+            print(waitingUser)
+            if waitingUser!=None:
+                #delete from waiting table
+                db.session.delete(waitingUser)
+                db.session.commit()
+                return {"message": "Request has been cancelled."}, 201
+            else:
+                return {"message": "Request cannot be cancelled if you are already shopping."}, 401
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 500
+
+    @cross_origin(origin='*')
+    @app.route('/qrcode', methods=['POST'])
+    @jwt_required()
+    def qrcode():
+        try:
+            username = request.json.get('username')
+            count_waiting_token = Waiting.query.filter_by(username=username).count()
+            count_shopping_token = Shopping.query.filter_by(username=username).count()
+
+            if count_waiting_token == 1:
+                super_token = Waiting.query.filter_by(username=username).first()
+                super_token = super_token.token
+                return {"qr_code": super_token}
+            
+            elif count_shopping_token == 1:
+                super_token = Shopping.query.filter_by(username=username).first()
+                super_token = super_token.token
+                return {"qr_code": super_token}
+
+            else:
+                return {"message": "You don't have any ticket."}, 400
+
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 500
+    @cross_origin(origin='*')
+    @app.route('/remainingTime', methods=['POST'])
+    @jwt_required()
+    def remainingTime():
+        try:
+            username = request.json.get('username')
+            waiting_time = Waiting.query.filter_by(username=username).first()
+            if waiting_time!=None:
+                waiting_time = waiting_time.shop_time
+            return {"remain_time": str(waiting_time)}
+
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 500
+
+>>>>>>> Stashed changes
     
     # this returns true if the user has the oldest request on a specific supermarket
     def isTurn(username,supermarket_id):
