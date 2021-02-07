@@ -14,18 +14,36 @@
       <img src="../assets/img/logo_clup_black_large.png" />
       <div v-if="!loading">
         <div v-if="no_qr" class="text-center">
-          <h2>No QR code available :(</h2>
+          <h2>No QR code available. Please request a ticket.</h2>
         </div>
         <div v-else class="text-center">
           <h3 style="text-align: center; padding-top: 20px; padding-bottom: 0px">
-            Your QRCode
+            Your QRCode to enter {{supermarket_name}}:
           </h3> 
           <vue-qrcode :value="qr_code" :width="300" />
-          <h3
-            style="text-align: center; padding-top: 0px; padding-bottom: 0px"
-          >
-            Your waiting time: {{ remain_time }}
-          </h3>
+            <!-- Waiting time view, activated when waiting time is larger than 0  -->
+          <div v-if="!time_exp" class="text-center">
+            <h3
+              style="text-align: center; padding-top: 0px; padding-bottom: 0px"
+            >
+              Your waiting time: 
+              {{ remain_time_hours }}hours
+              {{ remain_time_min }}min
+            </h3>
+          </div>
+          <div v-if="time_exp" class="text-center">
+            <!-- 5 minutes coundown view, activated when waiting time is smaller than 0  -->
+            <h3
+              style="text-align: center; color: red; padding-top: 0px; padding-bottom: 0px"
+            >
+              Your QRCode is about to expire:
+            </h3>
+            <h3
+              style="text-align: center; color: red; padding-top: 0px; padding-bottom: 0px"
+            >
+              {{ countDown }}sec
+            </h3>
+          </div>
         </div>
       </div>
       <div v-if="loading" class="text-center w-100">
@@ -39,7 +57,7 @@
         <span>Go back to map</span>
       </NuxtLink>
     </div>
-    <div class="text-center mt-5">
+    <div v-if="!no_qr" class="text-center mt-5">
     <!-- Cancel Booking or Line up -->
       <button @click="cancel()" class="back-button" style="color:white; width: 50%;"><span>Cancel request</span></button>
     </div>
@@ -62,11 +80,16 @@ export default {
       value: "token",
       width: "300",
       qr_code: "loquesea",
+      remain_time_min: "",
+      remain_time_hours: "",
       remain_time: "",
+      supermarket_name: "",
+      countDown: 300,
       loading: true,
       register_success: false,
       refresh: {},
       no_qr: true,
+      time_exp: false,
     };
   },
   methods: {
@@ -92,10 +115,11 @@ export default {
           response.json().then((data) => {
             console.log("Success:", data);
             this.qr_code = data.qr_code;
+            this.supermarket_name = data.supermarket_name;
             this.no_qr = false;
           });
         } else if (response.status != 200) {
-          this.qr_code = "";
+          this.qr_code = "loquesea";
           this.no_qr = true;
         }
       });
@@ -118,15 +142,51 @@ export default {
         if (response.status == 200) {
           response.json().then((data) => {
             console.log("Success:", data);
-            this.remain_time = data.remain_time;
+            this.remain_time_min = data.remain_time_min;
+            this.remain_time_hours = data.remain_time_hours;
+            this.remain_time = data.wait_time;
           });
+          if (this.remain_time==0){
+            this.time_exp = true;
+          }else{
+            this.time_exp = false;
+          }
         }
       });
     },
+      // count down timer to display when QRCode is from 5 min to expire
+      async countDownTimer() {
+        if(this.remain_time==0){
+                if(this.countDown > 0) {
+                    setTimeout(() => {
+                        this.countDown -= 1
+                    }, 1000)
+                }
+                else if(this.countDown == 0){
+                    this.$router.push("/")
+                }
+        }else{}
+      },
 
     /* Cancel Booking or Line up */
-    cancel(){
-
+    async cancel(){
+      let token = await this.getToken();
+      await this.qrCode();
+      const data = { username: this.username };
+      fetch("http://127.0.0.1:5000/cancelFun", {
+        method: "POST",
+        headers: {
+          Authorization: "JWT " + token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }).then((response) => {
+        console.log(response);
+        if (response.status == 200) {
+          this.showPopup("Please select another date or time!");
+        }
+      });
+      
     }
   },
 
@@ -146,7 +206,10 @@ export default {
     await this.remainingTime();
     this.refresh = setInterval(() => {
       this.remainingTime();
-    }, 5000);
+    }, 500);
+    this.countTimer = setInterval(() => {
+        this.countDownTimer();
+    }, 1000);
   },
 
   destroyed() {
