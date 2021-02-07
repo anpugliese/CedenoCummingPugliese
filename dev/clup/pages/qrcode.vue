@@ -41,7 +41,7 @@
             <h3
               style="text-align: center; color: red; padding-top: 0px; padding-bottom: 0px"
             >
-              {{ countDown }}sec
+              {{ enter_time }}sec
             </h3>
           </div>
         </div>
@@ -84,6 +84,7 @@ export default {
       remain_time_hours: "",
       remain_time: "",
       supermarket_name: "",
+      enter_time: "",
       countDown: 300,
       loading: true,
       register_success: false,
@@ -145,6 +146,7 @@ export default {
             this.remain_time_min = data.remain_time_min;
             this.remain_time_hours = data.remain_time_hours;
             this.remain_time = data.wait_time;
+            this.enter_time = data.enter_time;
           });
           if (this.remain_time==0){
             this.time_exp = true;
@@ -156,15 +158,11 @@ export default {
     },
       // count down timer to display when QRCode is from 5 min to expire
       async countDownTimer() {
-        if(this.remain_time==0){
+        if(this.enter_time==0){
                 if(this.countDown > 0) {
-                    setTimeout(() => {
-                        this.countDown -= 1
-                    }, 1000)
-                }
-                else if(this.countDown == 0){
                     this.$router.push("/")
                 }
+                else{}
         }else{}
       },
 

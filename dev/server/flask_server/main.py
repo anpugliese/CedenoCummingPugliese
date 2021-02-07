@@ -287,15 +287,19 @@ def create_app(testing=False):
         try:
             # Query to obtain waiting time from Waiting table
             username = request.json.get('username')
-            waiting_time = Waiting.query.filter_by(username=username).first()
-            if waiting_time!=None:
-                waiting_time = waiting_time.wait_time
+            waiting_time_g = Waiting.query.filter_by(username=username).first()
+
+            if waiting_time_g!=None:
+                waiting_time = waiting_time_g.wait_time
+                enter_time = waiting_time_g.enter_time
                 #Calculate number of minutes
                 mins = (round(waiting_time/3600, 4)-int(waiting_time/3600))
                 #return JSON with minutes, hours and total waiting time
                 return {"remain_time_min": int(mins*60),
                         "remain_time_hours": int(waiting_time/3600),
-                        "wait_time": waiting_time}
+                        "wait_time": waiting_time,
+                        "enter_time": enter_time,
+                        }
             else:
                 return {"message": "No QR code."}, 201
 
@@ -324,6 +328,7 @@ def create_app(testing=False):
             supermarket.waiting_time = 0
             db.session.commit()
         elif isAvailable(supermarket_id) and userWithTurn!=None:
+            dt_now=datetime.datetime.now()
             people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
             supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
             db.session.commit()
@@ -331,10 +336,17 @@ def create_app(testing=False):
                 userWithTurn.wait_time = 0
                 db.session.commit()
             else:
-                dt_now=datetime.datetime.now()
+                
                 diff=userWithTurn.shop_time-dt_now
                 time_to_turn = diff.seconds + diff.days * 24 * 3600
                 userWithTurn.wait_time = time_to_turn
+                db.session.commit()
+            if userWithTurn.wait_time!=0:
+                userWithTurn.shop_time=dt_now+datetime.timedelta(seconds=userWithTurn.wait_time)
+                db.session.commit()
+            else:
+                diff=userWithTurn.shop_time-dt_now
+                userWithTurn.enter_time = diff.seconds + diff.days * 24 * 3600+300
                 db.session.commit()
             
         else:
@@ -417,7 +429,7 @@ def create_app(testing=False):
     def control_waiting_time():
         app.app_context().push()
         dt_now = datetime.datetime.now()
-
+ 
         # delete expired requests
         expired_req=db.session.query(Waiting).filter(Waiting.shop_time < dt_now-datetime.timedelta(minutes=5))
         expired_req.delete()
@@ -451,12 +463,14 @@ def create_app(testing=False):
                     if user.wait_time!=0:
                         user.shop_time=dt_now+datetime.timedelta(seconds=user.wait_time)
                         db.session.commit()
+                    else:
+                        diff=user.shop_time-dt_now
+                        user.enter_time = diff.seconds + diff.days * 24 * 3600+300
+                        db.session.commit()
                     
-            
         print("Waiting Time Control: "+time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
-
-
-    # the followint is a function to delete the booking or lineup request
+  
+   # the followint is a function to delete the booking or lineup request
     @cross_origin(origin='*')
     @app.route('/cancelFun', methods=['POST'])    
     @jwt_required()
