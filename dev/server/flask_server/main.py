@@ -145,7 +145,7 @@ def create_app(testing=False):
         suma = 0
         for record in records:
             delta_times.append(record.delta_time)
-            suma += records.delta_time
+            suma += record.delta_time
         #avg_time=np.mean(np.array(delta_times))
         records_count=len(records)
         avg_time = 0
@@ -216,7 +216,8 @@ def create_app(testing=False):
             shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
             date_time = datetime.datetime.now()
             #time left to have the turn from booking
-            time_to_turn = (shop_time - date_time).seconds 
+            diff=shop_time - date_time   
+            time_to_turn = diff.seconds + diff.days * 24 * 3600
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()# total number of requests
             #all the bookings at the same time
@@ -240,6 +241,28 @@ def create_app(testing=False):
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 500
+
+    #this function receives the token and cancel the request associated to it
+    @cross_origin(origin='*')
+    @app.route('/cancel', methods=['POST'])
+    @jwt_required()
+    def cancel(): 
+        try:
+            print(request.json)
+            token = request.json.get('token')
+            # fetch token from Waiting table
+            waitingUser = Waiting.query.filter_by(token=token).first()
+            print(waitingUser)
+            if waitingUser!=None:
+                #delete from waiting table
+                db.session.delete(waitingUser)
+                db.session.commit()
+                return {"message": "Request has been cancelled."}, 201
+            else:
+                return {"message": "Request cannot be cancelled if you are already shopping."}, 401
+        except Exception as ex:
+            print(ex)
+
 
     @cross_origin(origin='*')
     @app.route('/qrcode', methods=['POST'])
@@ -274,7 +297,8 @@ def create_app(testing=False):
             username = request.json.get('username')
             print(username)
             waiting_time = Waiting.query.filter_by(username=username).first()
-            waiting_time = waiting_time.shop_time
+            if waiting_time!=None:
+                waiting_time = waiting_time.shop_time
             return {"remain_time": str(waiting_time)}
 
         except Exception as ex:
@@ -303,13 +327,15 @@ def create_app(testing=False):
             people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
             supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
             db.session.commit()
-            dt_now=datetime.datetime.now()
-            userWithTurn.wait_time = 0
-            userWithTurn.shop_time=dt_now
-            db.session.commit()
+            if userWithTurn.type_id==0:
+                userWithTurn.wait_time = 0
+                db.session.commit()
         else:
             people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
-            supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
+            if userWithTurn!=None:
+                supermarket.waiting_time = int(averageTime(supermarket)/60)
+            else:
+                supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
             db.session.commit()
 
     # given token and supermarket, the function removes it from Waiting and insert it on Shopping
@@ -380,7 +406,7 @@ def create_app(testing=False):
 
     #this function runs every one minute to update waiting time associated to the requests
     # also it removes from waiting table the expired requests
-    @scheduler.task('interval', id='do_job_1', seconds=60)
+    @scheduler.task('interval', id='do_job_1', seconds=5)
     def control_waiting_time():
         app.app_context().push()
         dt_now = datetime.datetime.now()
@@ -390,22 +416,30 @@ def create_app(testing=False):
         expired_req.delete()
         db.session.commit()
         
-        ## loop on the supermarkets that are present in the waiting table
-        for req in db.session.query(Waiting.supermarket_id).distinct(): 
+        # fetch supermarkets with waiting time greater than zero and that are present in the waiting table (no repetitions)
+        supermarkets_id_query=db.session.query(Supermarket.id).filter(Supermarket.waiting_time >0).all()
+        waintings_id_query=db.session.query(Waiting.supermarket_id).distinct().all()
+        supermarkets_list=supermarkets_id_query + list(set(waintings_id_query) - set(supermarkets_id_query))
+        ## loop on the supermarkets that are present in the waiting table and have waiting time greater than zero
+        for req in supermarkets_list:
             updateWaitingTime(req[0])
-            userWithTurn=db.session.query(Waiting).filter( #get the queue of the supermarket
-                and_(Waiting.supermarket_id == req[0],Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5),Waiting.type_id==0)).order_by(
-                    Waiting.req_time)
             if not isAvailable(req[0]): #if the supermarket is full
+                userWithTurn=db.session.query(Waiting).filter( #get the queue of the supermarket
+                    and_(Waiting.supermarket_id == req[0],Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5),Waiting.type_id==0)).order_by(
+                        Waiting.req_time)
                 supermarket=Supermarket.query.filter_by(id=req[0]).first()
                 counter=1
                 avg_time=averageTime(supermarket)
                 # update the wait time of the users that are in the queue
                 for user in userWithTurn:
-                    user.wait_time=int(counter*avg_time)
-                    user.shop_time=dt_now+datetime.timedelta(seconds=user.wait_time)
-                    db.session.commit()
-                    counter+=1
+                    if user.type_id==0:
+                        user.wait_time=int(counter*avg_time)
+                        db.session.commit()
+                        counter+=1
+                    if user.wait_time!=0:
+                        user.shop_time=dt_now+datetime.timedelta(seconds=user.wait_time)
+                        db.session.commit()
+                    
             
         print("Waiting Time Control: "+time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
 

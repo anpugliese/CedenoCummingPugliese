@@ -125,7 +125,25 @@ export default {
     },
 
     /* Cancel Booking or Line up */
-    cancel(){
+    async cancel(){
+      let token = await this.getToken();
+      const data = { token: this.qr_code };
+      fetch("http://127.0.0.1:5000/cancel", {
+        method: "POST",
+        headers: {
+          Authorization: "JWT " + token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }).then((response) => {
+        console.log(response);
+        if (response.status == 201) {
+          response.json().then((data) => {
+            console.log("Success:", data);
+            this.$router.push("/");
+          });
+        }
+      });
 
     }
   },
@@ -146,7 +164,7 @@ export default {
     await this.remainingTime();
     this.refresh = setInterval(() => {
       this.remainingTime();
-    }, 5000);
+    }, 50000);
   },
 
   destroyed() {
