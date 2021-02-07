@@ -178,7 +178,7 @@ def create_app(testing=False):
                 wait_time=int(people_waiting*averageTime(supermarket))
             if requests < 1:
                 token = secrets.token_hex(8)
-                waitingreq = Waiting(username, token, supermarket_id, date_time, date_time, wait_time)
+                waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, wait_time)
                 db.session.add(waitingreq)
                 db.session.commit()
                 return {"message": "Line-up has been created."}, 201
@@ -215,6 +215,7 @@ def create_app(testing=False):
             #     return {"message": "Booking Time is Full."}, 400
                 token = secrets.token_hex(8)
                 waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, 0)
+
                 db.session.add(waitingreq)
                 db.session.commit()
                 return {"message": "Booking has been created."}, 201
