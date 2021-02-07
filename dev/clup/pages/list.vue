@@ -25,10 +25,10 @@
         <div
           class="card border-secondary mb-3"
           :class="{
-            'red-marker': supermarket.waiting_time >= 300,
+            'red-marker': supermarket.waiting_time >= 15,
             'yellow-marker':
-              supermarket.waiting_time < 300 && supermarket.waiting_time >= 60,
-            'green-marker': supermarket.waiting_time < 60,
+              supermarket.waiting_time < 15 && supermarket.waiting_time >= 5,
+            'green-marker': supermarket.waiting_time < 5,
           }"
         >
           <div class="card-body">

@@ -80,6 +80,7 @@ export default {
       let date = this.bookingDate;
       let time = this.bookingTime;
       let datetime = date + " " + time;
+      console.log(datetime);
       const data = {
         username: this.username,
         supermarket_id: this.selected_supermarket,
