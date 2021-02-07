@@ -108,7 +108,7 @@ export default {
           } else if (response.status == 401)
             this.showPopup("You already have a booking!");
           else {
-            this.showPopup("Internal server error!");
+            this.showPopup("Please select date and time!");
           }
         })
         .catch((error) => {

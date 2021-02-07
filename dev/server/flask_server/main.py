@@ -43,9 +43,9 @@ def create_app(testing=False):
     app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=24) #Session time
 
     if testing:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
 
     db.init_app(app)
 

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="container">
+        <div class="container" id="register-container">
             <!-- Register form (more fields may be added) -->
             <img src="../assets/img/logo_clup_black_large.png" >
             <h3 style="text-align:left; padding-top:20px; padding-bottom:20px;">Sign up</h3>

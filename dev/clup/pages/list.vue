@@ -76,7 +76,16 @@ export default {
     hidePopup() {
       this.popup_message = "";
       this.display_popup = false;
-    },
+		},
+
+		sortList(supermarkets){
+		
+			let ordered_supermarkets = supermarkets.sort((a, b) => {
+				return a.waiting_time <= b.waiting_time;
+			});
+			return ordered_supermarkets			
+		},
+
     /* login function to send data and get a response from the server */
     async LineUpSupermarket(s_id) {
       console.log(s_id);
@@ -128,15 +137,12 @@ export default {
   },
 
   async mounted() {
-    this.username = await this.getUsername();
-    let supermarkets = JSON.parse(
-      JSON.stringify(await this.stored_supermarkets_list)
-    );
-    let ordered_supermarkets = supermarkets.sort((a, b) => {
-      return a.waiting_time <= b.waiting_time;
-    });
-    this.setSupermarketList(ordered_supermarkets);
-    console.log(ordered_supermarkets);
+		this.username = await this.getUsername();
+		let supermarkets = JSON.parse(
+			JSON.stringify(await this.stored_supermarkets_list)
+		);
+		this.setSupermarketList(this.sortList(supermarkets));
+		console.log(this.stored_supermarkets_list);
   },
 };
 </script>

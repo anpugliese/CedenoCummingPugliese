@@ -90,7 +90,6 @@ def test_accepted_getin(test_client, user_tokens):
     auth_user1 = user_tokens[0].get('token')
     user1 = user_tokens[0].get('username')
     supermarket_id = db_models.Supermarket.query.all()[0].id
-    print(supermarket_id)
     body = {"username": user1, "supermarket_id":  supermarket_id}
     response = test_client.post('/lineup',  headers={'Authorization': 'JWT ' + auth_user1}, json=body)
     assert response.status_code == 201
@@ -105,9 +104,6 @@ def test_accepted_getin(test_client, user_tokens):
     response = test_client.post('/getin',  headers={'Authorization': 'JWT ' + auth_user1}, json=body)
     assert response.status_code == 201
 
-    db_models.Shopping.query.delete()
-    db_models.Waiting.query.delete()
-    db.session.commit()
 
 def test_full_supermarket(test_client, user_tokens):
     """
