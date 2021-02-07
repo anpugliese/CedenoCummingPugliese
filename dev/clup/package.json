@@ -28,7 +28,7 @@
     "ts-jest": "^26.4.1",
     "vue-browser-geolocation": "^1.8.0",
     "vue-jest": "^3.0.4",
+    "vue-qrcode": "^0.3.5",
     "vue2-leaflet": "^2.6.0"
-  },
-  "devDependencies": {}
+  }
 }

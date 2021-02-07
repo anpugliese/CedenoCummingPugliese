@@ -109,7 +109,7 @@ class Waiting(db.Model):
     supermarket_id = db.Column(db.Integer, nullable=False)
     req_time = db.Column(db.DateTime, nullable=False)
     shop_time = db.Column(db.DateTime, nullable=False)
-    wait_time = db.Column(db.Integer, nullable=False)
+    wait_time = db.Column(db.Integer, nullable=True)
 
     def __init__(self, username, token, supermarket_id, req_time, shop_time, wait_time):
         self.username = username

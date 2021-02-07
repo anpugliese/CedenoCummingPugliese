@@ -33,9 +33,20 @@ export default {
         login_success: false,
       }
     },
+
+    async mounted(){
+        let loggedIn = await this.isLoggedIn();
+        if(loggedIn){
+            this.$router.push("/");
+        }
+    },
+
     methods: {
 
-        ...mapActions({saveToken: "auth/login"}),
+        ...mapActions({
+            saveToken: "auth/login",
+            isLoggedIn: "auth/isLoggedIn"
+        }),
 
         /* login function to send data and get a response from the server */ 
         login(){

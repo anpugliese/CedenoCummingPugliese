@@ -85,9 +85,6 @@ def test_accepted_getin(test_client, user_tokens):
     db.session.query(db_models.Shopping).delete()
     db.session.query(db_models.Waiting).delete()
     db.session.query(db_models.Record).delete()
-    #db_models.Shopping.query.delete()
-    #db_models.Waiting.query.delete()
-    #db_models.Record.query.delete()
     db.session.commit()
 
     auth_user1 = user_tokens[0].get('token')
@@ -118,7 +115,47 @@ def test_full_supermarket(test_client, user_tokens):
     WHEN user 3 tries to enter the '/getin' page is requested (POST)
     THEN It should not be accepted because the supermarket is full
     """
-    pass
+    db.session.query(db_models.Shopping).delete()
+    db.session.query(db_models.Waiting).delete()
+    db.session.query(db_models.Record).delete()
+    db.session.commit()
+
+    auth_user1 = user_tokens[0].get('token')
+    user1 = user_tokens[0].get('username')
+    supermarket_id = db_models.Supermarket.query.all()[0].id
+    print(supermarket_id)
+    body = {"username": user1, "supermarket_id":  supermarket_id}
+    response = test_client.post('/lineup',  headers={'Authorization': 'JWT ' + auth_user1}, json=body)
+    assert response.status_code == 201
+
+    auth_user2 = user_tokens[1].get('token')
+    user2 = user_tokens[1].get('username')
+    body = {"username": user2, "supermarket_id": supermarket_id}
+    response = test_client.post('/lineup',  headers={'Authorization': 'JWT ' + auth_user2}, json=body)
+    assert response.status_code == 201
+
+    auth_user3 = user_tokens[2].get('token')
+    user3 = user_tokens[2].get('username')
+    body = {"username": user3, "supermarket_id": supermarket_id}
+    response = test_client.post('/lineup',  headers={'Authorization': 'JWT ' + auth_user3}, json=body)
+    assert response.status_code == 201
+
+    body = {"token": user1}
+    response = test_client.post('/getin',  headers={'Authorization': 'JWT ' + auth_user1}, json=body)
+    assert response.status_code == 201
+
+    body = {"token": user2}
+    response = test_client.post('/getin',  headers={'Authorization': 'JWT ' + auth_user2}, json=body)
+    assert response.status_code == 201
+    
+    body = {"token": user3}
+    response = test_client.post('/getin',  headers={'Authorization': 'JWT ' + auth_user3}, json=body)
+    assert response.status_code == 400
+
+    db_models.Shopping.query.delete()
+    db_models.Waiting.query.delete()
+    db.session.commit()
+
 
 def test_now_available(test_client, user_tokens):
     """
@@ -126,4 +163,47 @@ def test_now_available(test_client, user_tokens):
     WHEN user 1 or user 2 gets out and user 3 tries to enter the '/getin' page is requested (POST)
     THEN It should be accepted because the supermarket is not full anymore
     """
-    pass
+    db.session.query(db_models.Shopping).delete()
+    db.session.query(db_models.Waiting).delete()
+    db.session.query(db_models.Record).delete()
+    db.session.commit()
+
+    auth_user1 = user_tokens[0].get('token')
+    user1 = user_tokens[0].get('username')
+    supermarket_id = db_models.Supermarket.query.all()[0].id
+    print(supermarket_id)
+    body = {"username": user1, "supermarket_id":  supermarket_id}
+    response = test_client.post('/lineup',  headers={'Authorization': 'JWT ' + auth_user1}, json=body)
+    assert response.status_code == 201
+
+    auth_user2 = user_tokens[1].get('token')
+    user2 = user_tokens[1].get('username')
+    body = {"username": user2, "supermarket_id": supermarket_id}
+    response = test_client.post('/lineup',  headers={'Authorization': 'JWT ' + auth_user2}, json=body)
+    assert response.status_code == 201
+
+    auth_user3 = user_tokens[2].get('token')
+    user3 = user_tokens[2].get('username')
+    body = {"username": user3, "supermarket_id": supermarket_id}
+    response = test_client.post('/lineup',  headers={'Authorization': 'JWT ' + auth_user3}, json=body)
+    assert response.status_code == 201
+
+    body = {"token": user1}
+    response = test_client.post('/getin',  headers={'Authorization': 'JWT ' + auth_user1}, json=body)
+    assert response.status_code == 201
+
+    body = {"token": user2}
+    response = test_client.post('/getin',  headers={'Authorization': 'JWT ' + auth_user2}, json=body)
+    assert response.status_code == 201
+
+    body = {"token": user2}
+    response = test_client.post('/getout',  headers={'Authorization': 'JWT ' + auth_user2}, json=body)
+    assert response.status_code == 201
+    
+    body = {"token": user3}
+    response = test_client.post('/getin',  headers={'Authorization': 'JWT ' + auth_user3}, json=body)
+    assert response.status_code == 201
+
+    db_models.Shopping.query.delete()
+    db_models.Waiting.query.delete()
+    db.session.commit()
