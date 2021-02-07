@@ -10,7 +10,7 @@
       </NuxtLink>
     </div>
     <!-- QR code view -->
-    <div class="container">    
+    <div class="container" id="qr-code-container">    
       <img src="../assets/img/logo_clup_black_large.png" />
       <div v-if="!loading">
         <div v-if="no_qr" class="text-center">
@@ -192,6 +192,8 @@ export default {
     ...mapGetters({
       auth: "auth/getAuthState",
       username1: "auth/getUsername",
+      selected_supermarket: "supermarket/getSelectedSupermarket",
+      stored_supermarkets_list: "supermarket/getSupermarketList",
     }),
   },
 

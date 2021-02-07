@@ -89,10 +89,6 @@
               :icon="icon"
             >
               <l-icon :icon-anchor="staticAnchor" class-name="someExtraClass">
-                <!-- Filter according to waiting time (now just max capacity, waiting time has to be added) -->
-                <!-- <div class="supermarket-card" style="margin: 2px;"
-              bind:class="paintMarker(supermarket.waiting_time)"> -->
-                <!-- {{supermarket.waiting_time}} -->
                 <div
                   class="supermarket-card"
                   style="margin: 2px"
@@ -205,6 +201,7 @@ export default {
       setSupermarketList: "supermarket/setSupermarketList",
       setSelectedSupermarket: "supermarket/setSelectedSupermarket",
     }),
+
     /* Get user's location */
     getLocation() {
       VueGeolocation.getLocation().then((coordinates) => {
@@ -214,20 +211,36 @@ export default {
       });
     },
 
+    /**
+     * Deletes token from localStorage and navigates to /login
+     */
     async logout() {
       await this.store_logout();
       this.$router.push("/login");
     },
 
+    /**
+     * Show popup overlay with the message specified as parameter.
+     * @param msg The message to show in the popup.
+     */
     showPopup(msg) {
       this.popup_message = msg;
       this.display_popup = true;
     },
+
+    /**
+     * Hides the popup and cleans the display message.
+     */
     hidePopup() {
       this.popup_message = "";
       this.display_popup = false;
     },
 
+    /**
+     * Sets the clicked supermarket (using the parameter s_id) in the store to be persistent between views.
+     * Then navigates to /booking
+     * @param s_id supermarket id
+     */
     async bookSupermarket(s_id) {
       console.log(s_id);
       await this.setSelectedSupermarket(s_id);
@@ -235,7 +248,11 @@ export default {
       this.$router.push("/booking");
     },
 
-    /* Bring the whole list of supermarkets from the database thru an endpoint */
+    /**
+     * Bring the whole list of supermarkets from the database through an endpoint.
+     * The supermarkets are loaded when the view is rendered, if there is an error it returns to /login and logs out the user,
+     * this is to prevent that non-logged in users enter the app.
+     */
     async loadSupermarkets() {
       let token;
       token = await this.getToken();
@@ -254,16 +271,21 @@ export default {
               this.supermarkets_list = data.supermarkets;
             });
           } else {
+            this.store_logout();
             this.$router.push("/login");
           }
         })
         .catch((error) => {
           console.error("Error:", error);
+          this.store_logout();
           this.$router.push("/login");
         });
     },
 
-    /* Distance between two points */
+    /**
+     * Euclidean distance between two points.
+     * At short distances we can consider the space to be a plane and use simple euclidean distance.
+     */
     getDistance(lat1, lon1, lat2, lon2) {
       let distance = Math.sqrt(
         Math.pow(parseFloat(lat1) - parseFloat(lat2), 2) +
@@ -271,7 +293,10 @@ export default {
       );
       return distance;
     },
-    /* Takes the slider value and the checked supermarkets */
+
+    /**
+     * Filters the list by taking the value and the checked supermarkets and filtering by them
+     */
     async applyFilter() {
       this.filterWaitingTime = this.slider_value;
       this.filterName = [];
@@ -281,7 +306,11 @@ export default {
         }
       }
     },
-    /* Lists the filter names  */
+
+    /**
+     * Updates the supermarkets names that are selected to be filtered.
+     * This list is shown in the filters.
+     */
     updateFilterNames(super_list) {
       if (this.supermarkets_names.length == 0) {
         let sp_list = [];
@@ -301,8 +330,12 @@ export default {
       }
     },
 
+    /**
+     * Filter the supermarkets list that is in data by distance and the selected filters.
+     * Calls the updateFilterNames() to update the filters.
+     * Returns a new list.
+     */
     filterList() {
-      /* super_list of nearby supermarkets according to user's location */
       let super_list = [];
       for (let i in this.supermarkets_list) {
         let supermarket = this.supermarkets_list[i];
@@ -317,9 +350,8 @@ export default {
           super_list.push(supermarket);
         }
       }
+
       this.updateFilterNames(super_list);
-      /* The filtered supermarkets must comply with both waiting time and selected names */
-      /* If there's a filter value for waiting time takes the elements(supermarkets) that must be shown */
       super_list = super_list.filter((element) => {
         if (this.filterWaitingTime != null) {
           if (element.waiting_time > this.filterWaitingTime) {
@@ -327,7 +359,7 @@ export default {
           }
         }
 
-        /* Updates the list with the selected supermarkets in the checkbox */
+        // Updates the list with the selected supermarket filters
         if (this.filterName.length > 0) {
           let name_exists = false;
           for (let i in this.filterName) {
@@ -345,7 +377,9 @@ export default {
       return super_list;
     },
 
-    /* Clears filter and shows all nearby supermarkets */
+    /**
+     * Clears filters and shows all nearby supermarkets.
+     */
     clearFilter() {
       for (let i in this.supermarkets_names) {
         let supermarket = this.supermarkets_names[i];
@@ -354,7 +388,11 @@ export default {
       this.applyFilter();
     },
 
-    /* lineup function to send data and get a response from the server */
+    /**
+     * Receives a user and a supermarkets and performs the line up by sending a request to the backend (/lineup).
+     * If the request was successful then it automatically shows the qrcode view with the user's token to enter the
+     * supermarket in a specific time shown, else shows a popup with the error.
+     */
     async lineup(sm_id) {
       let token = await this.getToken();
       const data = { supermarket_id: sm_id, username: this.username };
@@ -393,9 +431,10 @@ export default {
       stored_supermarkets_list: "supermarket/getSupermarketList",
     }),
 
-    /* Dynamic function to update the list of nearby supermarkets */
+    /**
+     * Dynamic function to update the list of nearby supermarkets
+     */
     new_supermarkets_list: function () {
-      this.filterTrigger;
       let super_list = this.filterList();
       this.setSupermarketList(super_list);
       return super_list;
@@ -403,15 +442,17 @@ export default {
   },
 
   async mounted() {
-    /* Get users location */
+    //gets user location
     this.getLocation();
+
     this.icon = this.$L.icon({
       iconUrl:
         "https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg",
       iconSize: [30, 42],
       iconAnchor: [15, 42], // half of width + height
     });
-    /* load all supermarkets from the database */
+    
+    // load all supermarkets from the database
     this.loadSupermarkets();
     this.username = await this.getUsername();
   },

@@ -9,54 +9,71 @@ let nuxt = null
 
 // Init Nuxt.js and create a server listening on localhost:4000
 beforeAll(async () => {
-    // const config = {
-    //   dev: process.env.NODE_ENV === 'production',
-    //   rootDir: resolve(__dirname, '../'),
-    //   mode: 'universal',
-    //   plugins,
-    //   modules
-    // }
-  
-    nuxt = new Nuxt({...nuxtConfig, server: { port: 3001}, buildDir: '.nuxt-build-jest'})
-  
-    await new Builder(nuxt).build()
-  
-    await nuxt.server.listen(3001, 'localhost')
-  }, 300000)
-  
-  // Example of testing only generated html
-  describe('GET /', () => {
-    test('Route / Renders map-container', async () => {
-      const { html } = await nuxt.server.renderRoute('/', {})
-  
-      expect(html).toContain('map-container')
-    })
-  })
+  nuxt = new Nuxt({ ...nuxtConfig, server: { port: 3001 }, buildDir: '.nuxt-build-jest' })
 
-    // Example of testing only generated html
-    describe('GET /login', () => {
-        test('Route /login renders', async () => {
-          const { html } = await nuxt.server.renderRoute('/login', {})
-      
-          expect(html).toContain('Login')
-        })
-      })
-  
-  // describe('GET /', () => {
-  //   test('returns status code 200', async () => {
-  //     const response = await request(nuxt.server.app).get('/')
-  //     expect(response.statusCode).toBe(200)
-  //   })
-  // })
-  
-  // describe('GET /test', () => {
-  //   test('returns status code 404', async () => {
-  //     const response = await request(nuxt.server.app).get('/test')
-  //     expect(response.statusCode).toBe(404)
-  //   })
-  // })
-  
-  // Close server and ask nuxt to stop listening to file changes
-  afterAll(() => {
-    nuxt.close()
+  await new Builder(nuxt).build()
+
+  await nuxt.server.listen(3001, 'localhost')
+}, 300000)
+
+// Test if / renders
+describe('index test', () => {
+  test('Route / Renders map-container', async () => {
+
+    const { html } = await nuxt.server.renderRoute('/', {})
+    expect(html).toContain('map-container')
+
   })
+})
+
+// Test if /login renders
+describe('GET /login', () => {
+  test('Route /login renders', async () => {
+    const { html } = await nuxt.server.renderRoute('/login', {})
+
+    expect(html).toContain('Login')
+  })
+})
+
+// Test if /booking renders
+describe('GET /booking', () => {
+  test('Route /booking renders', async () => {
+    const { html } = await nuxt.server.renderRoute('/booking', {})
+
+    expect(html).toContain('Booking');
+    expect(html).toContain('Please select your date and time');
+  })
+})
+
+// Test if /list renders
+describe('GET /list', () => {
+  test('Route /list renders', async () => {
+    const { html } = await nuxt.server.renderRoute('/list', {})
+
+    expect(html).toContain('Buy as soon as possible');
+  })
+})
+
+// Test if /qrcode renders
+describe('GET /qrcode', () => {
+  test('Route /qrcode renders', async () => {
+    const { html } = await nuxt.server.renderRoute('/qrcode', {})
+
+    expect(html).toContain('qr-code-container');
+  })
+})
+
+// Test if /register renders
+describe('GET /register', () => {
+  test('Route /register renders', async () => {
+    const { html } = await nuxt.server.renderRoute('/register', {})
+
+    expect(html).toContain('register-container');
+  })
+})
+
+
+// Close server and ask nuxt to stop listening to file changes
+afterAll(() => {
+  nuxt.close()
+})

@@ -38,7 +38,7 @@ export default {
         let loggedIn = await this.isLoggedIn();
         if(loggedIn){
             this.$router.push("/");
-        }
+        } 
     },
 
     methods: {
