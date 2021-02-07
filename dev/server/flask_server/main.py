@@ -330,6 +330,13 @@ def create_app(testing=False):
             if userWithTurn.type_id==0:
                 userWithTurn.wait_time = 0
                 db.session.commit()
+            else:
+                dt_now=datetime.datetime.now()
+                diff=userWithTurn.shop_time-dt_now
+                time_to_turn = diff.seconds + diff.days * 24 * 3600
+                userWithTurn.wait_time = time_to_turn
+                db.session.commit()
+            
         else:
             people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
             if userWithTurn!=None:
@@ -436,6 +443,11 @@ def create_app(testing=False):
                         user.wait_time=int(counter*avg_time)
                         db.session.commit()
                         counter+=1
+                    else:
+                        diff=user.shop_time-dt_now
+                        time_to_turn = diff.seconds + diff.days * 24 * 3600
+                        user.wait_time = time_to_turn
+                        db.session.commit()
                     if user.wait_time!=0:
                         user.shop_time=dt_now+datetime.timedelta(seconds=user.wait_time)
                         db.session.commit()
