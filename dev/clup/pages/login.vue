@@ -23,6 +23,8 @@
 </template>
 
 <script>
+import {mapActions, mapGetters} from 'vuex';
+
 export default {
     data: function () {
       return {
@@ -31,10 +33,26 @@ export default {
         login_success: false,
       }
     },
+
+    async mounted(){
+        let loggedIn = await this.isLoggedIn();
+        if(loggedIn){
+            this.$router.push("/");
+        }
+    },
+
     methods: {
+
+        ...mapActions({
+            saveToken: "auth/login",
+            isLoggedIn: "auth/isLoggedIn"
+        }),
+
         /* login function to send data and get a response from the server */ 
         login(){
             const data = { username: this.username, password: this.password };
+            let savedUsername = this.username;
+            console.log(savedUsername);
 
             fetch('http://127.0.0.1:5000/auth', {
             method: 'POST', // or 'PUT'
@@ -51,6 +69,8 @@ export default {
                     response.json().then(data => {
                         console.log('Success:', data);
                         if(this.login_success){
+                            console.log(savedUsername);
+                            this.saveToken({token: data.access_token, username: savedUsername});
                             this.$router.push("/");
                         }
                     })

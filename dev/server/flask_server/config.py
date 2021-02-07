@@ -6,4 +6,8 @@ class Config(object):
     DEVELOPMENT = True
     TESTING = True
     CSRF_ENABLED = True
+<<<<<<< HEAD
     SECRET_KEY = 'this-really-needs-to-be-changed'
+=======
+    SECRET_KEY = 'this-really-needs-to-be-changed'
+>>>>>>> main

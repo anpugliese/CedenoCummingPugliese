@@ -6,4 +6,8 @@ export const state = () => ({
     increment(state) {
       state.counter++
     }
+<<<<<<< HEAD
   }    
+=======
+  }
+>>>>>>> main

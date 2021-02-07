@@ -6,17 +6,23 @@ import string
 import re
 from datetime import timedelta
 from flask import Flask, request
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS, cross_origin 
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
 from flask_migrate import Migrate, MigrateCommand
 from sqlalchemy import and_
 import numpy as np
+<<<<<<< HEAD
 import requests
 import time
 from flask_apscheduler import APScheduler
 #Authenticate fun
+=======
+import time
+from flask_apscheduler import APScheduler
+
+>>>>>>> main
 db = SQLAlchemy()
 
 #This must be declared after declaring db
@@ -35,6 +41,7 @@ def identity(payload):
     print(User.query.get(user_id))
     return User.query.get(user_id) is not None
 
+<<<<<<< HEAD
 
 # This function creates the app. The testing parameter changes the database url.
 # The development server is created calling this function in the end of the file.
@@ -45,10 +52,21 @@ def create_app(testing=False):
     app.config['JWT_EXPIRATION_DELTA'] = datetime.timedelta(hours=12) #Session time
 
 
+=======
+# This function creates the app. The testing parameter changes the database url.
+# The development server is created calling this function in the end of the file.
+def create_app(testing=False):
+    app = Flask(__name__)
+    app.config.from_object(os.environ['APP_SETTINGS'])
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=24) #Session time
+
+>>>>>>> main
     if testing:
         app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+<<<<<<< HEAD
             
         
     db.init_app(app)
@@ -71,13 +89,18 @@ def create_app(testing=False):
         else:
             app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
             
+=======
+>>>>>>> main
 
     db.init_app(app)
 
     jwt = JWT(app, authenticate, identity) #JWT Json Web Token to manage sessions, by default managed in /auth (POST request)
     CORS(app)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
     # initialize scheduler
     scheduler = APScheduler()
     # if you don't wanna use a config, you can set options here:
@@ -85,8 +108,14 @@ def create_app(testing=False):
     scheduler.init_app(app)
     scheduler.start()
 
+<<<<<<< HEAD
 
 
+=======
+    migrate = Migrate(app, db)
+
+    #Register function to save users in the database, usernames(or emails) are unique
+>>>>>>> main
     @cross_origin(origin='*')
     @app.route('/register', methods=['POST'])
     def register():
@@ -101,9 +130,13 @@ def create_app(testing=False):
             return {"message": f"user {user.username} has been created."}, 201
         except Exception as ex:
             print(ex)
+<<<<<<< HEAD
             return {"error": "Error"}, 400
 
 
+=======
+            return {"error": "Error"}, 500
+>>>>>>> main
 
     #Populate database with supermarkets from supermarkets.json, only used once while developing 
     # @cross_origin(origin='*')
@@ -134,7 +167,10 @@ def create_app(testing=False):
     #     except Exception as ex:
     #         print(ex)
     #         return {"error": "Error"}, 400
+<<<<<<< HEAD
     
+=======
+>>>>>>> main
 
     #Retrieve all supermarkets (filter only in frontend)
     @cross_origin(origin='*')
@@ -164,6 +200,7 @@ def create_app(testing=False):
             return {"supermarkets": json_list}
         except Exception as ex:
             print(ex)
+<<<<<<< HEAD
             return {"error": "Error"}, 400
 
     def averageTime(supermarket):
@@ -173,11 +210,32 @@ def create_app(testing=False):
             delta_times.append(record.delta_time)
         avg_time=np.mean(np.array(delta_times))
         records_count=len(records)
+=======
+            return {"error": "Error"}, 500
+
+    # it computes the average shopping time in seconds in case there are records, otherwise it just returns the default value in the DB
+    def averageTime(supermarket):
+        delta_times = []
+        records = Record.query.filter_by(supermarket_id=supermarket.id).all()
+        suma = 0
+        for record in records:
+            delta_times.append(record.delta_time)
+            suma += records.delta_time
+        #avg_time=np.mean(np.array(delta_times))
+        records_count=len(records)
+        avg_time = 0
+        if records_count > 0:
+            avg_time = suma/records_count
+>>>>>>> main
         if records_count>0:
             return avg_time
         else:
             return supermarket.mean_shopping_time*60
 
+<<<<<<< HEAD
+=======
+    # it checks whether a supermarket is available or not
+>>>>>>> main
     def isAvailable(supermarket_id):
         people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count()
         supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
@@ -220,7 +278,11 @@ def create_app(testing=False):
                 return {"error": "You already Have a Request."}, 401
         except Exception as ex:
             print(ex)
+<<<<<<< HEAD
             return {"error": "Error"}, 400
+=======
+            return {"error": "Error"}, 500
+>>>>>>> main
 
     #Booking function for selected supermarket
     @cross_origin(origin='*')
@@ -260,6 +322,7 @@ def create_app(testing=False):
                 return {"error": "You already have a request."}, 401
         except Exception as ex:
             print(ex)
+<<<<<<< HEAD
 <<<<<<< Updated upstream
             return {"error": "Error"}, 400
 =======
@@ -285,6 +348,8 @@ def create_app(testing=False):
                 return {"message": "Request cannot be cancelled if you are already shopping."}, 401
         except Exception as ex:
             print(ex)
+=======
+>>>>>>> main
             return {"error": "Error"}, 500
 
     @cross_origin(origin='*')
@@ -318,27 +383,41 @@ def create_app(testing=False):
     def remainingTime():
         try:
             username = request.json.get('username')
+<<<<<<< HEAD
             waiting_time = Waiting.query.filter_by(username=username).first()
             if waiting_time!=None:
                 waiting_time = waiting_time.shop_time
+=======
+            print(username)
+            waiting_time = Waiting.query.filter_by(username=username).first()
+            waiting_time = waiting_time.shop_time
+>>>>>>> main
             return {"remain_time": str(waiting_time)}
 
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 500
 
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+>>>>>>> main
     
     # this returns true if the user has the oldest request on a specific supermarket
     def isTurn(username,supermarket_id):
         dt_now = datetime.datetime.now()
+<<<<<<< HEAD
         userWithTurn=db.session.query(Waiting).filter(
             and_(Waiting.supermarket_id == supermarket_id,Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5))).order_by(
+=======
+        userWithTurn=db.session.query(Waiting).filter(Waiting.supermarket_id == supermarket_id).order_by(
+>>>>>>> main
                 Waiting.req_time).first()
         if userWithTurn!=None and userWithTurn.username==username and isAvailable(supermarket_id):
             return True
         else:
             return False
+<<<<<<< HEAD
     # this updates the waiting time in minutes each time an user enters or leaves the supermarket
     def updateWaitingTime(supermarket_id):
         supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
@@ -428,6 +507,110 @@ def create_app(testing=False):
         
         ## loop on the supermarkets that are present in the waiting table
         for req in db.session.query(Waiting.supermarket_id).distinct(): 
+=======
+    # this updates the waiting times each time an user enters or leaves the supermarket
+    def updateWaitingTime(supermarket_id):
+        supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
+        userWithTurn=db.session.query(Waiting).filter(Waiting.supermarket_id == supermarket_id).order_by(
+                    Waiting.req_time).first()
+        if isAvailable(supermarket_id) and userWithTurn==None:
+            supermarket.waiting_time = 0
+            db.session.commit()
+        elif isAvailable(supermarket_id) and userWithTurn!=None:
+            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
+            supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
+            db.session.commit()
+            dt_now=datetime.datetime.now()
+            userWithTurn.wait_time = 0
+            userWithTurn.shop_time=dt_now
+            db.session.commit()
+        else:
+            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
+            supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
+            db.session.commit()
+
+    # given token and supermarket, the function removes it from Waiting and insert it on Shopping
+    @cross_origin(origin='*')
+    @app.route('/getin', methods=['POST'])
+    def getin():
+        try:
+            print(request.json)
+            token = request.json.get('token')
+            # get request from that token
+            waitingUser = Waiting.query.filter_by(token=token).first()
+            if waitingUser!=None:
+                username=waitingUser.username
+                supermarket_id = request.json.get('supermarket_id')
+                date_time = datetime.datetime.now()
+                # check if the user has the oldest request in the queue to the supermarket (FCFS queueing)
+                if isTurn(username,supermarket_id):
+                    #update waiting time of the supermarket
+                    updateWaitingTime(supermarket_id)
+                    #delete from waiting table
+                    db.session.delete(waitingUser)
+                    db.session.commit()
+                    #add to shopping table
+                    shoppingreq = Shopping(username, token, supermarket_id, date_time)
+                    db.session.add(shoppingreq)
+                    db.session.commit()
+
+
+                    return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
+                else:
+                    return {"error": "It is not your turn."}, 401
+            else:
+                return {"error": "Wrong token"}, 402
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 500
+
+    # given a token and supermarket, this removes it from Shopping and insert a Record of total shop time in seconds
+    @cross_origin(origin='*')
+    @app.route('/getout', methods=['POST'])
+    def getout():
+        try:
+            print(request.json)
+            token = request.json.get('token')
+            # get shopping user associated to the token scanned when the user leaves the supermarket
+            shoppingUser = Shopping.query.filter_by(token=token).first()
+            if shoppingUser!=None:
+                username=shoppingUser.username
+                supermarket_id = request.json.get('supermarket_id')
+                #update waiting time of the supermarket
+                updateWaitingTime(supermarket_id)
+                date_time = datetime.datetime.now()
+                enter_time = shoppingUser.enter_time
+                #remove user from Shopping table
+                db.session.delete(shoppingUser)
+                db.session.commit()
+                #registrate the record of the time that the user took in shopping for time estimation in the specific supermarket
+                record = Record(enter_time, date_time, supermarket_id, (date_time-enter_time).seconds)
+                db.session.add(record)
+                db.session.commit()
+                
+                return {"message": "The door is opened. "+str(username)+" has leaved from ID: "+str(supermarket_id)}, 201
+            else:
+                return {"error": "User is not Shopping"}, 401
+        except Exception as ex:
+            print(ex)
+            return {"error": "Error"}, 500
+
+    #this function runs every one minute to update waiting time associated to the requests
+    # also it removes from waiting table the expired requests
+    @scheduler.task('interval', id='do_job_1', seconds=60)
+    def control_waiting_time():
+        app.app_context().push()
+        dt_now = datetime.datetime.now()
+
+        # delete expired requests
+        expired_req=db.session.query(Waiting).filter(Waiting.shop_time < dt_now-datetime.timedelta(minutes=5))
+        expired_req.delete()
+        db.session.commit()
+        
+        ## loop on the supermarkets that are present in the waiting table
+        for req in db.session.query(Waiting.supermarket_id).distinct(): 
+            updateWaitingTime(req[0])
+>>>>>>> main
             userWithTurn=db.session.query(Waiting).filter( #get the queue of the supermarket
                 and_(Waiting.supermarket_id == req[0],Waiting.shop_time <= dt_now+datetime.timedelta(minutes=5),Waiting.type_id==0)).order_by(
                     Waiting.req_time)
@@ -442,6 +625,7 @@ def create_app(testing=False):
                     db.session.commit()
                     counter+=1
             
+<<<<<<< HEAD
         
 
         print("Waiting Time Control: "+time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
@@ -460,6 +644,13 @@ def create_app(testing=False):
         except Exception as ex:
             print(ex)
             return {"error": "Error"}, 400
+=======
+        print("Waiting Time Control: "+time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
+
+
+
+    # the following is just an auxiliary function for developing (NEEDS TO BE DELETED AT SOME POINT)
+>>>>>>> main
 
     @cross_origin(origin='*')
     @app.route('/deleteall', methods=['POST'])
@@ -472,6 +663,7 @@ def create_app(testing=False):
             return {"message": "All waiting & shopping users have been deleted"}, 201
         except Exception as ex:
             print(ex)
+<<<<<<< HEAD
             return {"error": "Error"}, 400
 
 
@@ -480,4 +672,10 @@ def create_app(testing=False):
 
 
 
+=======
+            return {"error": "Error"}, 500
+
+    return app
+
+>>>>>>> main
 app = create_app()

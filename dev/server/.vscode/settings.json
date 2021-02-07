@@ -1,7 +1,11 @@
 {
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     "python.pythonPath": "c:\\Users\\asus\\Documents\\GitHub\\CedenoCummingPugliese\\dev\\server\\venv\\Scripts\\python.exe"
 =======
     "python.linting.enabled": true
 >>>>>>> Stashed changes
+=======
+    "python.linting.enabled": false
+>>>>>>> main
 }

@@ -40,13 +40,17 @@ class Supermarket(db.Model):
         self.max_capacity = 2
         self.timetable = Timetable().toJson()
         self.waiting_time = 0
-        self.mean_shopping_time = 10 
+        self.mean_shopping_time = 5 
 
 
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 class Shopping(db.Model):
     __tablename__ = 'Shopping'
 
@@ -55,6 +59,10 @@ class Shopping(db.Model):
     token = db.Column(db.String(), nullable=False)
     supermarket_id = db.Column(db.Integer, nullable=False)
     enter_time = db.Column(db.DateTime, nullable=False)
+<<<<<<< HEAD
+=======
+    #Maybe also exit time -> exit_time = db.Column(db.DateTime, nullable=False)
+>>>>>>> main
 
     def __init__(self, username, token, supermarket_id, enter_time):
         self.username = username
@@ -74,8 +82,14 @@ class Waiting(db.Model):
     supermarket_id = db.Column(db.Integer, nullable=False)
     req_time = db.Column(db.DateTime, nullable=False)
     shop_time = db.Column(db.DateTime, nullable=False)
+<<<<<<< HEAD
     wait_time = db.Column(db.Integer, nullable=False)
     type_id = db.Column(db.Integer, nullable=False)
+=======
+    wait_time = db.Column(db.Integer, nullable=True)
+    type_id = db.Column(db.Integer, nullable=True)
+
+>>>>>>> main
 
     def __init__(self, username, token, supermarket_id, req_time, shop_time, wait_time, type_id):
         self.username = username

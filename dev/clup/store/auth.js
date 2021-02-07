@@ -19,7 +19,11 @@ export const state = () => ({
         commit("updateAuth", true);
         commit("updateUsername", payload.username);
     },
+<<<<<<< HEAD
     logout({commit}, payload){
+=======
+    logout({commit}){
+>>>>>>> main
         window.localStorage.clear();
         commit("updateAuth", false);
         commit("updateUsername", '');
@@ -30,6 +34,12 @@ export const state = () => ({
     getUsername({commit}){
         return window.localStorage.getItem("username");
     },
+<<<<<<< HEAD
+=======
+    isLoggedIn({commit}){
+      return window.localStorage.getItem("username") != null;
+    }
+>>>>>>> main
     
   }
 

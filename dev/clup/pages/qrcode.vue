@@ -125,6 +125,7 @@ export default {
     },
 
     /* Cancel Booking or Line up */
+<<<<<<< HEAD
     async cancel(){
       let token = await this.getToken();
       const data = { token: token };
@@ -150,6 +151,10 @@ export default {
         .catch((error) => {
           console.error("Error:", error);
         });
+=======
+    cancel(){
+
+>>>>>>> main
     }
   },
 
