@@ -11,6 +11,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
 from flask_migrate import Migrate, MigrateCommand
+from sqlalchemy import and_
+import numpy as np
 
 db = SQLAlchemy()
 
@@ -39,9 +41,9 @@ def create_app(testing=False):
     app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=24) #Session time
 
     if testing:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
 
     db.init_app(app)
 
@@ -131,10 +133,15 @@ def create_app(testing=False):
     def averageTime(supermarket):
         delta_times = []
         records = Record.query.filter_by(supermarket_id=supermarket.id).all()
+        suma = 0
         for record in records:
             delta_times.append(record.delta_time)
-        avg_time=np.mean(np.array(delta_times))
+            suma += records.delta_time
+        #avg_time=np.mean(np.array(delta_times))
         records_count=len(records)
+        avg_time = 0
+        if records_count > 0:
+            avg_time = suma/records_count
         if records_count>0:
             return avg_time
         else:
@@ -157,8 +164,8 @@ def create_app(testing=False):
             print(request.json)
             username = request.json.get('username')
             supermarket_id = request.json.get('supermarket_id')
-            shop_time_raw = request.json.get('shop_time')
-            shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
+            #shop_time_raw = request.json.get('shop_time')
+            #shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
             date_time = datetime.datetime.now()
             requests = Waiting.query.filter_by(username=username).count()
             requests += Shopping.query.filter_by(username=username).count()
@@ -191,6 +198,8 @@ def create_app(testing=False):
             username = request.json.get('username')
             supermarket_id = request.json.get('supermarket_id')
             shop_time_raw = request.json.get('shop_time')
+            print(shop_time_raw)
+            
             shop_time = datetime.datetime.strptime(shop_time_raw, '%Y-%m-%d %H:%M')
             date_time = datetime.datetime.now()
             time_to_turn = (shop_time - date_time).seconds
@@ -205,7 +214,8 @@ def create_app(testing=False):
             # if maxBookings > 3:
             #     return {"message": "Booking Time is Full."}, 400
                 token = secrets.token_hex(8)
-                waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, time_to_turn)
+                waitingreq = Waiting(username, token, supermarket_id, date_time, shop_time, 0)
+
                 db.session.add(waitingreq)
                 db.session.commit()
                 return {"message": "Booking has been created."}, 201
@@ -213,7 +223,7 @@ def create_app(testing=False):
                 return {"error": "You already have a request."}, 401
         except Exception as ex:
             print(ex)
-            return {"error": "Error"}, 400
+            return {"error": "Error"}, 500
 
     @cross_origin(origin='*')
     @app.route('/qrcode', methods=['POST'])
@@ -300,11 +310,11 @@ def create_app(testing=False):
                 else:
                     return {"error": "It is not your turn."}, 401
             else:
-                return {"error": "Wrong token"}, 400
+                return {"error": "Wrong token"}, 402
         except Exception as ex:
             print(ex)
-            return {"error": "Error"}, 400
-    # given a token and supermarket, this removes it from Shopping and insert a Record of total shop time in seconds
+            return {"error": "Error"}, 500
+
     @cross_origin(origin='*')
     @app.route('/getout', methods=['POST'])
     def getout():
