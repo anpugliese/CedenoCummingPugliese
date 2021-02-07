@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- Popup -->
     <div class="round-back-button">
       <NuxtLink to="/">
         <fa-icon
@@ -8,21 +9,20 @@
         />
       </NuxtLink>
     </div>
-    <!-- Login form -->
+    <!-- QR code view -->
     <div class="container">    
       <img src="../assets/img/logo_clup_black_large.png" />
-      <!-- <h5 style="color: #4a0d70;">Hello {{username}} :</h5> -->
       <div v-if="!loading">
         <div v-if="no_qr" class="text-center">
           <h2>No QR code available :(</h2>
         </div>
         <div v-else class="text-center">
-          <h3 style="text-align: center; padding-top: 20px; padding-bottom: 20px">
+          <h3 style="text-align: center; padding-top: 20px; padding-bottom: 0px">
             Your QRCode
           </h3> 
           <vue-qrcode :value="qr_code" :width="300" />
           <h3
-            style="text-align: center; padding-top: 20px; padding-bottom: 20px"
+            style="text-align: center; padding-top: 0px; padding-bottom: 0px"
           >
             Your waiting time: {{ remain_time }}
           </h3>
@@ -33,10 +33,15 @@
       </div>
     </div>
 
+    <!-- Go back to map -->
     <div class="text-center mt-5">
       <NuxtLink to="/" class="back-button" style="color:white"> 
         <span>Go back to map</span>
       </NuxtLink>
+    </div>
+    <div class="text-center mt-5">
+    <!-- Cancel Booking or Line up -->
+      <button @click="cancel()" class="back-button" style="color:white; width: 50%;"><span>Cancel request</span></button>
     </div>
   </div>
 </template>
@@ -70,9 +75,9 @@ export default {
       getUsername: "auth/getUsername",
     }),
 
+    /* Get QR code of username */
     async qrCode() {
       let token = await this.getToken();
-      // const data = { username: this.username }
       const data = { username: this.username };
       fetch("http://127.0.0.1:5000/qrcode", {
         method: "POST",
@@ -96,6 +101,7 @@ export default {
       });
     },
 
+    /* Update remaining time to enter supermarket */
     async remainingTime() {
       let token = await this.getToken();
       await this.qrCode();
@@ -117,6 +123,11 @@ export default {
         }
       });
     },
+
+    /* Cancel Booking or Line up */
+    cancel(){
+
+    }
   },
 
   computed: {
@@ -167,7 +178,7 @@ button {
   margin: 8px 0;
   border: none;
   cursor: pointer;
-  width: 100%;
+  width: 50%;
 }
 button:hover {
   opacity: 0.8;

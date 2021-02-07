@@ -1,5 +1,10 @@
 <template>
   <div>
+		<div class="overlay" @click="hidePopup()" v-if="display_popup">
+      <div class="popup">
+        <h4>{{ popup_message }}</h4>
+      </div>
+    </div>
     <div class="round-back-button">
       <NuxtLink to="/">
         <fa-icon
@@ -52,6 +57,8 @@ export default {
     return {
       ordered_list: [],
       lineup_success: false,
+      popup_message: "",
+      display_popup: false,
     };
   },
   methods: {
@@ -61,6 +68,15 @@ export default {
       setSupermarketList: "supermarket/setSupermarketList",
       setSelectedSupermarket: "supermarket/setSelectedSupermarket",
     }),
+    showPopup(msg) {
+			document.documentElement.scrollTop = 0;
+      this.popup_message = msg;
+      this.display_popup = true;
+    },
+    hidePopup() {
+      this.popup_message = "";
+      this.display_popup = false;
+    },
     /* login function to send data and get a response from the server */
     async LineUpSupermarket(s_id) {
       console.log(s_id);
@@ -91,6 +107,9 @@ export default {
                 this.$router.push("/qrcode");
               }
             });
+					}
+					else {
+            this.showPopup("Could not request lineup!");
           }
         })
         .catch((error) => {
@@ -167,6 +186,27 @@ span.psw {
   .cancelbtn {
     width: 100%;
   }
+}
+
+.overlay {
+  width: 100%;
+  height: 100vh;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+}
+
+.popup {
+  margin: auto auto;
+  background-color: white;
+  border-radius: 5px;
+  z-index: 1000;
+  top: 25%;
+  width: 200px;
+  padding: 20px;
+  text-align: center;
+  opacity: 1;
+  position: relative;
 }
 
 /* for filter according to waiting time: red, green and yellow*/

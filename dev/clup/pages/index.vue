@@ -21,7 +21,7 @@
             value="50"
             v-model="slider_value"
           />
-          <h6>Waiting time less than {{ slider_value }}</h6>
+          <h6>Waiting time less than {{ slider_value }} minutes</h6>
         </div>
         <div class="check" v-for="sp in supermarkets_names" :key="sp.id">
           <label :for="sp.id">

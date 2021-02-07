@@ -14,7 +14,7 @@
       </NuxtLink>
     </div>
 
-    <!-- Login form -->
+    <!-- Booking form -->
     <div class="container">
       <img src="../assets/img/logo_clup_black_large.png" />
       <h3 style="text-align: left; padding-top: 20px; padding-bottom: 20px">
@@ -44,7 +44,6 @@
 </template>
 
 <script>
-// import Datetime from 'vue-datetime';
 import { mapActions, mapGetters } from "vuex";
 export default {
   data: function () {
@@ -54,11 +53,6 @@ export default {
       username: "",
       supermarket_id: "",
       shop_time: "",
-      year: "",
-      month: "",
-      day: "",
-      hour: "",
-      minute: "",
       selected_supermarket_name: "",
       popup_message: "",
       display_popup: false,
@@ -81,18 +75,11 @@ export default {
       this.display_popup = false;
     },
 
-    /*  showFlashMessage(element){
-                var event = new CustomEvent('showFlashMessage');
-                element.dispatchEvent(event);
-            }, */
-    /* register function to send data and get a response from the server */
     async booking() {
       let token = await this.getToken();
       let date = this.bookingDate;
       let time = this.bookingTime;
       let datetime = date + " " + time;
-      console.log(datetime);
-      // datestr = datestr.concat(String(year), "-", String(month))
       const data = {
         username: this.username,
         supermarket_id: this.selected_supermarket,
@@ -110,13 +97,9 @@ export default {
           console.log(response);
           if (response.status == 201) {
             this.booking_success = true;
-            /*                         var flashMessages = document.getElementsByClassName('js-flash-message');
-                        //show first flash message avilable in your page
-                        showFlashMessage(flashMessages[0]); */
             response.json().then((data) => {
               console.log("Success:", data);
               if (this.booking_success) {
-                alert("You successfully booked!");
                 this.$router.push("/qrcode");
               }
             });
