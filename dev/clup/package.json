@@ -24,6 +24,7 @@
     "leaflet": "^1.7.1",
     "nuxt": "^2.14.6",
     "nuxt-leaflet": "0.0.25",
+    "qrcode": "^1.4.4",
     "supertest": "^6.0.1",
     "ts-jest": "^26.4.1",
     "vue-browser-geolocation": "^1.8.0",
