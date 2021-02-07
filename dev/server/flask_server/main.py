@@ -324,12 +324,30 @@ def create_app(testing=False):
             supermarket.waiting_time = 0
             db.session.commit()
         elif isAvailable(supermarket_id) and userWithTurn!=None:
+            dt_now=datetime.datetime.now()
             people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
             supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
             db.session.commit()
             if userWithTurn.type_id==0:
                 userWithTurn.wait_time = 0
                 db.session.commit()
+<<<<<<< Updated upstream
+=======
+            else:
+                
+                diff=userWithTurn.shop_time-dt_now
+                time_to_turn = diff.seconds + diff.days * 24 * 3600
+                userWithTurn.wait_time = time_to_turn
+                db.session.commit()
+            if userWithTurn.wait_time!=0:
+                userWithTurn.shop_time=dt_now+datetime.timedelta(seconds=userWithTurn.wait_time)
+                db.session.commit()
+            else:
+                diff=userWithTurn.shop_time-dt_now
+                userWithTurn.enter_time = diff.seconds + diff.days * 24 * 3600+300
+                db.session.commit()
+            
+>>>>>>> Stashed changes
         else:
             people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
             if userWithTurn!=None:
@@ -439,8 +457,11 @@ def create_app(testing=False):
                     if user.wait_time!=0:
                         user.shop_time=dt_now+datetime.timedelta(seconds=user.wait_time)
                         db.session.commit()
+                    else:
+                        diff=user.shop_time-dt_now
+                        user.enter_time = diff.seconds + diff.days * 24 * 3600+300
+                        db.session.commit()
                     
-            
         print("Waiting Time Control: "+time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
 
 
