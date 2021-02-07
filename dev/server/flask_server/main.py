@@ -435,7 +435,7 @@ def create_app(testing=False):
     # the followint is a function to delete the booking or lineup request
     @cross_origin(origin='*')
     @app.route('/cancelFun', methods=['POST'])    
-    #@jwt_required()
+    @jwt_required()
     def cancelFun():
         try:
             # query Wating table for a specific user
