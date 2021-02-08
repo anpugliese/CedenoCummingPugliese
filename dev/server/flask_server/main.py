@@ -424,7 +424,7 @@ def create_app(testing=False):
 
     #this function runs every one minute to update waiting time associated to the requests
     # also it removes from waiting table the expired requests
-    @scheduler.task('interval', id='do_job_1', seconds=300)
+    @scheduler.task('interval', id='do_job_1', seconds=10)
     def control_waiting_time():
         app.app_context().push()
         dt_now = datetime.datetime.now()
