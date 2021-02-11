@@ -271,14 +271,12 @@ export default {
               this.supermarkets_list = data.supermarkets;
             });
           } else {
-            this.store_logout();
-            this.$router.push("/login");
+            this.logout();
           }
         })
         .catch((error) => {
           console.error("Error:", error);
-          this.store_logout();
-          this.$router.push("/login");
+          this.logout();
         });
     },
 

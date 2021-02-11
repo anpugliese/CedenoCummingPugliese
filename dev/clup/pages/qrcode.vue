@@ -85,7 +85,6 @@ export default {
       remain_time: "",
       supermarket_name: "",
       enter_time: "",
-      countDown: 300,
       loading: true,
       register_success: false,
       refresh: {},
@@ -156,15 +155,7 @@ export default {
         }
       });
     },
-      // count down timer to display when QRCode is from 5 min to expire
-      async countDownTimer() {
-        if(this.enter_time==0){
-                if(this.countDown > 0) {
-                    this.$router.push("/")
-                }
-                else{}
-        }else{}
-      },
+      
 
     /* Cancel Booking or Line up */
     async cancel(){
@@ -206,14 +197,12 @@ export default {
     await this.remainingTime();
     this.refresh = setInterval(() => {
       this.remainingTime();
-    }, 500);
-    this.countTimer = setInterval(() => {
-        this.countDownTimer();
     }, 1000);
   },
 
   destroyed() {
     clearInterval(this.refresh);
+    clearInterval(this.countTimer);
   },
 };
 </script>

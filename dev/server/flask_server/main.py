@@ -12,7 +12,6 @@ from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
 from flask_migrate import Migrate, MigrateCommand
 from sqlalchemy import and_
-import numpy as np
 import time
 from flask_apscheduler import APScheduler
 
@@ -116,7 +115,7 @@ def create_app(testing=False):
         try:
             sp_list = Supermarket.query.all()
             json_list = []
-            for supermarket in sp_list:
+            for supermarket in sp_list: 
                 current_timetable = Timetable(json_timetable=json.loads(supermarket.timetable))
                 #if current_timetable.isAvailable():
                 if True:
@@ -425,7 +424,7 @@ def create_app(testing=False):
 
     #this function runs every one minute to update waiting time associated to the requests
     # also it removes from waiting table the expired requests
-    @scheduler.task('interval', id='do_job_1', seconds=5)
+    @scheduler.task('interval', id='do_job_1', seconds=10)
     def control_waiting_time():
         app.app_context().push()
         dt_now = datetime.datetime.now()
@@ -469,6 +468,8 @@ def create_app(testing=False):
                         db.session.commit()
                     
         print("Waiting Time Control: "+time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
+        db.session.close()
+        
   
    # the followint is a function to delete the booking or lineup request
     @cross_origin(origin='*')
