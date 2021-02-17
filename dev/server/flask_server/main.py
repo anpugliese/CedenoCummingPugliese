@@ -42,9 +42,9 @@ def create_app(testing=False):
     app.config['JWT_EXPIRATION_DELTA'] = timedelta(hours=24) #Session time
 
     if testing:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_test_DB" #URI to be changed in deployment
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://angelly:123@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
+        app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql+psycopg2://postgres:password@127.0.0.1:5432/clup_DB" #URI to be changed in deployment
 
     db.init_app(app)
 
@@ -311,7 +311,8 @@ def create_app(testing=False):
     # this returns true if the user has the oldest request on a specific supermarket
     def isTurn(username,supermarket_id):
         dt_now = datetime.datetime.now()
-        userWithTurn=db.session.query(Waiting).filter(Waiting.supermarket_id == supermarket_id).order_by(
+        userWithTurn=db.session.query(Waiting).filter(
+            and_(Waiting.supermarket_id == supermarket_id,Waiting.shop_time < dt_now)).order_by(
                 Waiting.req_time).first()
         if userWithTurn!=None and userWithTurn.username==username and isAvailable(supermarket_id):
             return True
