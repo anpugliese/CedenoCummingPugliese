@@ -178,7 +178,8 @@ def create_app(testing=False):
             # total number of users shopping
             people_shopping=Shopping.query.filter_by(supermarket_id=supermarket_id).count() 
             # total number of users waiting
-            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count() 
+            people_waiting=db.session.query(Waiting).filter(
+            and_(Waiting.supermarket_id == supermarket_id,Waiting.shop_time < date_time)).count()
             supermarket=Supermarket.query.filter_by(id=supermarket_id).first()
             # if the user is the first in the queue of a full supermarket
             if people_waiting==0 and people_shopping==supermarket.max_capacity:
@@ -329,7 +330,8 @@ def create_app(testing=False):
             db.session.commit()
         elif isAvailable(supermarket_id) and userWithTurn!=None:
             dt_now=datetime.datetime.now()
-            people_waiting=Waiting.query.filter_by(supermarket_id=supermarket_id).count()
+            people_waiting=db.session.query(Waiting).filter(
+                and_(Waiting.supermarket_id == supermarket_id,Waiting.shop_time < dt_now)).count()
             supermarket.waiting_time = int(averageTime(supermarket)*people_waiting/60)
             db.session.commit()
             if userWithTurn.type_id==0:
@@ -381,8 +383,11 @@ def create_app(testing=False):
                     shoppingreq = Shopping(username, token, supermarket_id, date_time)
                     db.session.add(shoppingreq)
                     db.session.commit()
-
-
+                    #give the turn to the next in line
+                    nextWaitingUser = Waiting.query.filter_by(supermarket_id=supermarket_id).first()
+                    if nextWaitingUser!=None and nextWaitingUser.type_id==0:
+                        nextWaitingUser.shop_time = date_time
+                        db.session.commit()
                     return {"message": "The door is opened. "+str(username)+" has entered to ID: "+str(supermarket_id)}, 201
                 else:
                     return {"error": "It is not your turn."}, 401
@@ -415,7 +420,11 @@ def create_app(testing=False):
                 record = Record(enter_time, date_time, supermarket_id, (date_time-enter_time).seconds)
                 db.session.add(record)
                 db.session.commit()
-                
+                #give the turn to the next in line
+                nextWaitingUser = Waiting.query.filter_by(supermarket_id=supermarket_id).first()
+                if nextWaitingUser!=None and nextWaitingUser.type_id==0:
+                    nextWaitingUser.shop_time = date_time
+                    db.session.commit()
                 return {"message": "The door is opened. "+str(username)+" has leaved from ID: "+str(supermarket_id)}, 201
             else:
                 return {"error": "User is not Shopping"}, 401
