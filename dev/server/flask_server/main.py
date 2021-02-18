@@ -328,6 +328,9 @@ def create_app(testing=False):
         if isAvailable(supermarket_id) and userWithTurn==None:
             supermarket.waiting_time = 0
             db.session.commit()
+        elif isAvailable(supermarket_id) and userWithTurn!=None and userWithTurn.type_id==1:
+            supermarket.waiting_time = 0
+            db.session.commit()
         elif isAvailable(supermarket_id) and userWithTurn!=None:
             dt_now=datetime.datetime.now()
             people_waiting=db.session.query(Waiting).filter(
